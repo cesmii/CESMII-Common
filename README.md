@@ -3,4 +3,4 @@ This is common code shared by multiple repos in the CESMII ecosystem. For instan
 
 # Repositories that use this repo as a submodule
 - CESMII Marketplace repo (private)
-- CESMII Profile Designer (public)
+- CESMII Profile Designer (https://github.com/cesmii/ProfileDesigner)
