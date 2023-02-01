@@ -11,5 +11,6 @@ namespace CESMII.Common.CloudLibClient
         Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount);
         Task<UANameSpace?> DownloadAsync(string id);
         Task<UANameSpace?> GetAsync(string modelUri, DateTime? publicationDate, bool exactMatch);
+        Task<string> UploadAsync(UANameSpace uaNamespace);
     }
 }

@@ -66,5 +66,14 @@ namespace CESMII.Common.CloudLibClient
             return uaNamespace;
         }
 
+        public async Task<string> UploadAsync(UANameSpace uaNamespace)
+        {
+            var result = await _client.UploadNodeSetAsync(uaNamespace);
+            if (result.Status == System.Net.HttpStatusCode.OK)
+            {
+                return null;
+            }
+            return result.Message;
+        }
     }
 }
