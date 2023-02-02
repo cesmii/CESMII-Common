@@ -71,7 +71,9 @@ namespace CESMII.Common.CloudLibClient
             var result = await _client.UploadNodeSetAsync(uaNamespace);
             if (result.Status == System.Net.HttpStatusCode.OK)
             {
+                #pragma warning disable 8603
                 return null;
+                #pragma warning restore 8603
             }
             return result.Message;
         }
