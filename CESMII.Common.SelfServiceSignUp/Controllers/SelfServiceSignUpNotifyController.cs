@@ -3,8 +3,10 @@
     using CESMII.Common.SelfServiceSignUp.Models;
     using CESMII.Common.SelfServiceSignUp.Services;
     using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json;
     using System.Net;
     using System.Net.Mail;
+    using System.Text;
     using System.Threading.Tasks;
 
 #pragma warning disable 8600, 8602     // Ignore worries about null values.
@@ -46,26 +48,52 @@
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        public async Task<IActionResult> Submit(SubmitInputModel input)
+        // public async Task<IActionResult> Submit(SubmitInputModel input)
+        public async Task<IActionResult> Submit()
         {
-            if (input == null)
+            SubmitInputModel input = new SubmitInputModel();
+            StringBuilder sb = new StringBuilder();
+            try
             {
-                return BadRequest(new ResponseContent("ValidationFailed", "Can not deserialize input claims.", HttpStatusCode.BadRequest, action: "ValidationError"));
-            }
+                sb.AppendLine("Line 57");
+                using (var reader = new StreamReader(Request.Body))
+                {
+                    sb.AppendLine("Line 61");
+                    var body = await reader.ReadToEndAsync();
+                    sb.AppendLine("Line 63");
+                    input = JsonConvert.DeserializeObject<SubmitInputModel>(body);
+                    sb.AppendLine("Line 65");
 
-            if (string.IsNullOrEmpty(input.email))
-            {
-                return BadRequest(new ResponseContent("EmailEmpty", "The value entered for email is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
-            }
+                    input.inputData = body;
+                }
 
-            if (string.IsNullOrEmpty(input.displayName))
-            {
-                return BadRequest(new ResponseContent("DisplayNameEmpty", "The value entered for display name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
-            }
+                if (input == null)
+                {
+                    sb.AppendLine("Line 72");
+                    return BadRequest(new ResponseContent("ValidationFailed", "Can not deserialize input claims.", HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
 
-            if (string.IsNullOrEmpty(input.extension_c9d077d37595472ebfc533555830328d_OrganizationName))
+                if (string.IsNullOrEmpty(input.email))
+                {
+                    sb.AppendLine("Line 78");
+                    return BadRequest(new ResponseContent("EmailEmpty", "The value entered for email is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+
+                if (string.IsNullOrEmpty(input.displayName))
+                {
+                    sb.AppendLine("Line 84");
+                    return BadRequest(new ResponseContent("DisplayNameEmpty", "The value entered for display name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+
+                if (string.IsNullOrEmpty(input.extension_c9d077d37595472ebfc533555830328d_OrganizationName))
+                {
+                    sb.AppendLine("Line 90");
+                    return BadRequest(new ResponseContent("OrganizationNameEmpty", "The value entered for organization name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+            }
+            catch (Exception ex)
             {
-                return BadRequest(new ResponseContent("OrganizationNameEmpty", "The value entered for organization name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
+                sb.AppendLine(ex.Message.ToString());
             }
 
             // Send email that we have created a new user account
@@ -88,6 +116,14 @@
                                 $"<p>The Automated Sign-Up System (Updated 1/23/2023 at 12:17pm) </p>" +
                                 $"<p></p>";
 
+            if (sb.Length == 0)
+            {
+                sb.AppendLine("");
+                sb.AppendLine("Weird -- nothing here.");
+            }
+
+
+            strContent += sb.ToString();
 
             MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
 
