@@ -2,10 +2,11 @@
 namespace CESMII.Common.SelfServiceSignUp.Models
 {
     using CESMII.Common.SelfServiceSignUp.Entities;
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    
+
 
     /// <summary>
     /// SubmitInputModel - Structure is created with user attributes named for
@@ -26,6 +27,9 @@ namespace CESMII.Common.SelfServiceSignUp.Models
     ///      C:\> Get-AzureADApplication | Get-AzureADApplicationExtensionProperty
     /// 
     /// </summary>
+
+#pragma warning disable 8600, 8602
+
     public class SubmitInputModel
     {
         public string? email { get; set; }
@@ -42,9 +46,9 @@ namespace CESMII.Common.SelfServiceSignUp.Models
 
         public string? ui_locales { get; set; }
 
-        public string? extension_c9d077d37595472ebfc533555830328d_OrganizationName { get; set; }
+        public string? OrganizationName { get; set; }
 
-        public string? extension_c9d077d37595472ebfc533555830328d_CESMIIMember { get; set; }
+        public string? CESMIIMember { get; set; }
 
         public string? inputData { get; set; }
 
@@ -61,10 +65,53 @@ namespace CESMII.Common.SelfServiceSignUp.Models
             data.Locale = ui_locales;
             data.InputData = inputData; 
             data.ApprovalStatus = "Pending";
-            data.Organization = extension_c9d077d37595472ebfc533555830328d_OrganizationName;
-            data.CESMIIMember = (extension_c9d077d37595472ebfc533555830328d_CESMIIMember=="True" ? true : false);
+            data.Organization = OrganizationName;
+            data.CESMIIMember = CESMIIMember.ToLower()=="true" ? true : false;
 
             return data;
+        }
+
+
+        public SubmitInputModel(string strInput)
+        {
+            if (!string.IsNullOrEmpty(strInput))
+            {
+                JsonTextReader reader = new JsonTextReader(new StringReader(strInput));
+
+                while (reader.Read())
+                {
+                    if (reader.Value != null)
+                    {
+                        // Console.WriteLine($"{iItem}) Token: {reader.TokenType}, Value: {reader.Value}");
+                        if (reader.TokenType ==JsonToken.PropertyName && reader.Value != null)
+                        {
+                            string strName = reader.Value.ToString();
+                            if (reader.Read())
+                            {
+                                if(reader.TokenType == JsonToken.String && reader.Value != null)
+                                {
+                                    string strValue = reader.Value.ToString();
+                                    switch (strName)
+                                    { 
+                                        case "email": this.email = strValue; break;
+                                        case "displayName": this.displayName = strValue; break;
+                                        case "givenName": this.givenName = strValue; break;
+                                        case "surName": this.surName = strValue; break;
+                                        case "phoneNumber": this.phoneNumber = strValue; break;
+                                        case "ui_locales": this.ui_locales = strValue; break;
+                                        default:
+                                            if (strName.EndsWith("_OrganizationName"))
+                                                OrganizationName = strValue;
+                                            else if (strName.EndsWith("_CESMIIMember"))
+                                                CESMIIMember = strValue;
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
