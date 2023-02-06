@@ -46,26 +46,19 @@
         }
 
         [HttpPost]
-        [SelfSignUpAuth]
+        //[SelfSignUpAuth]
         [ActionName("submit")]
         // public async Task<IActionResult> Submit(SubmitInputModel input)
-        public async Task<IActionResult> Submit()
+        public async Task<IActionResult> Submit(string strInput)
         {
-            SubmitInputModel input = new SubmitInputModel();
+            // We get Json - send it to be parsed in the SubmitInputModel constructor
+            SubmitInputModel input = null;
             StringBuilder sb = new StringBuilder();
             try
             {
-                sb.AppendLine("Line 57");
-                using (var reader = new StreamReader(Request.Body))
-                {
-                    sb.AppendLine("Line 61");
-                    var body = await reader.ReadToEndAsync();
-                    sb.AppendLine("Line 63");
-                    input = JsonConvert.DeserializeObject<SubmitInputModel>(body);
-                    sb.AppendLine("Line 65");
+                input = new SubmitInputModel(strInput);
 
-                    input.inputData = body;
-                }
+                sb.AppendLine("Line 57");
 
                 if (input == null)
                 {
@@ -85,7 +78,7 @@
                     return BadRequest(new ResponseContent("DisplayNameEmpty", "The value entered for display name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
-                if (string.IsNullOrEmpty(input.extension_c9d077d37595472ebfc533555830328d_OrganizationName))
+                if (string.IsNullOrEmpty(input.OrganizationName))
                 {
                     sb.AppendLine("Line 90");
                     return BadRequest(new ResponseContent("OrganizationNameEmpty", "The value entered for organization name is invalid", HttpStatusCode.BadRequest, action: "ValidationError"));
@@ -100,8 +93,8 @@
             string strSender = "paul.yao@c-labs.com";
             string strRecipient = "paul.yao@c-labs.com";
             string strUserName = input.displayName;
-            string strUserOrganization =  input.extension_c9d077d37595472ebfc533555830328d_OrganizationName;
-            string strOrgCesmiiMember = input.extension_c9d077d37595472ebfc533555830328d_CESMIIMember;
+            string strUserOrganization =  input.OrganizationName;
+            string strOrgCesmiiMember = input.CESMIIMember;
             string strUserEmail = input.email;
 
 
