@@ -51,7 +51,7 @@
         }
 
         [HttpPost]
-        [SelfSignUpAuth]
+        //[SelfSignUpAuth]
         [ActionName("submit")]
         // public async Task<IActionResult> Submit(SubmitInputModel input)
         public async Task<IActionResult> Submit(string strInput)
