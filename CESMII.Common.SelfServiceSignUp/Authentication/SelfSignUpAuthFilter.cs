@@ -1,8 +1,10 @@
 ﻿namespace CESMII.Common.SelfServiceSignUp
 {
+    using CESMII.Common.SelfServiceSignUp.Services;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.Mvc.Filters;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
     using System;
     using System.Net;
     using System.Net.Http.Headers;
@@ -10,15 +12,20 @@
 
     public class SelfSignUpAuthFilter : IAuthorizationFilter
     {
+        protected readonly ILogger<SelfSignUpAuthFilter> _logger;
         private IConfiguration _config;
 
-        public SelfSignUpAuthFilter(IConfiguration config)
+        public SelfSignUpAuthFilter(
+            ILogger<SelfSignUpAuthFilter> logger, 
+            IConfiguration config)
         {
             _config = config.GetSection("SelfSignUpAuth");
+            _logger = logger;
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
+            _logger.LogInformation($"OnAuthorization: Validating API Connector");
             try
             {
                 string authHeader = context.HttpContext.Request.Headers["Authorization"];
@@ -36,16 +43,19 @@
                         {
                             if (IsAuthorized(context, credentials[0], credentials[1]))
                             {
+                                _logger.LogInformation($"OnAuthorization: Valid!");
                                 return;
                             }
                         }
                     }
                 }
 
+                _logger.LogError("OnAuthorization: Credentials are incorrect.");
                 ReturnUnauthorizedResult(context);
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
+                _logger.LogError($"OnAuthorization: Credential exception: {ex.Message}.");
                 ReturnUnauthorizedResult(context);
             }
         }
