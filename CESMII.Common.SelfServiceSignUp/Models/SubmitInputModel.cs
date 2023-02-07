@@ -100,7 +100,7 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                                         case "phoneNumber": this.phoneNumber = strValue; break;
                                         case "ui_locales": this.ui_locales = strValue; break;
                                         default:
-                                            if (strName.EndsWith("_OrganizationName"))
+                                            if (strName.EndsWith("_Organization"))
                                                 OrganizationName = strValue;
                                             else if (strName.EndsWith("_CESMIIMember"))
                                                 CESMIIMember = strValue;
