@@ -72,18 +72,25 @@
                 strInput = await reader.ReadToEndAsync();
             }
 
+            if (string.IsNullOrEmpty(strInput))
+            {
+                string strError = "Cannot read claims from header.";
+                _logger.LogError(strError);
+                return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+            }
+
             // We get Json - send it to be parsed in the SubmitInputModel constructor
             SubmitInputModel input = null;
             try
             {
+                input = new SubmitInputModel(strInput);
+
                 if (input == null)
                 {
                     string strError = "Can not deserialize input claims.";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
-
-                input = new SubmitInputModel(strInput);
 
                 if (string.IsNullOrEmpty(input.email))
                 {
