@@ -28,6 +28,7 @@
         {
             _config = new ConfigUtil(configuration).MailSettings;
             _logger = logger;
+            _logger.LogError("MailRelayService::MailRelayService() - constructor called");
         }
 
         public async Task<bool> SendEmail(MailMessage message)
@@ -136,39 +137,59 @@
             return true;
         }
 
+        #pragma warning disable 8600
+
         internal async Task<bool> SendEmailSendGrid(MailMessage message)
         {
-            _logger.LogInformation($"SendEmailSendGrid: About to send email from {_config.MailFromAddress}");
-
-            var client = new SendGridClient(_config.ApiKey);
-            var from = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
-            var subject = message.Subject;
-            var mailTo = new List<EmailAddress>();
-            // If Mail Relay is in debug mode set all addresses to the configuration file.
-            if (_config.Debug)
+            bool bReturn = false;
+            try
             {
-                _logger.LogDebug($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
-                foreach (var address in _config.DebugToAddresses)
+                string strApiKey = _config.ApiKey;
+                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry] - {strApiKey}");
+
+                var client = new SendGridClient(strApiKey);
+                var from = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
+                var subject = message.Subject;
+                var mailTo = new List<EmailAddress>();
+                // If Mail Relay is in debug mode set all addresses to the configuration file.
+                if (_config.Debug)
                 {
-                    mailTo.Add(new EmailAddress(address));
+                    _logger.LogDebug($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
+                    foreach (var address in _config.DebugToAddresses)
+                    {
+                        mailTo.Add(new EmailAddress(address));
+                    }
+                }
+                else
+                {
+                    foreach (var address in _config.ToAddresses)
+                    {
+                        mailTo.Add(new EmailAddress(address));
+                    }
+                }
+
+                _logger.LogError("MailRelayService: SendEmailSendGrid About to call CreateSingleEmailToMultipleRecipients");
+
+                var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, mailTo, subject, null, message.Body);
+
+                _logger.LogError("MailRelayService: SendEmailSendGrid About to call SendEmailAsync");
+                var response = await client.SendEmailAsync(msg);
+                if (response == null)
+                {
+                    _logger.LogError("MailRelayService: SendEmailSendGrid error - response == null");
+                }
+                else
+                {
+                    _logger.LogError("MailRelayService: SendEmailSendGrid success");
+                    bReturn = true;
                 }
             }
-            else
+            catch (Exception ex)
             {
-                foreach (var address in _config.ToAddresses)
-                {
-                    mailTo.Add(new EmailAddress(address));
-                }
+                _logger.LogError($"MailRelayService: Exception -- {ex.Message}");
             }
 
-            var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, mailTo, subject, null, message.Body);
-
-            var response = await client.SendEmailAsync(msg);
-            if (response != null)
-            {
-                return true;
-            }
-            return false;
+            return bReturn;
         }
 
     }

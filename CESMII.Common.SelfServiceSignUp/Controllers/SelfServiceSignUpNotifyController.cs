@@ -48,27 +48,19 @@
         {
             this._logger = logger;
             this._mailService = mailservice;
-            _logger.LogError($"SelfServiceSignUpNotifyController: SelfServiceSignUpNotifyController()");
         }
 
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        // public async Task<IActionResult> Submit(SubmitInputModel input)
-        // public async Task<IActionResult> Submit(string strInput)
+        // public async Task<IActionResult> Submit(SubmitInputModel input)  // Azure AD seems to like this - probably with [FromBody]
+        // public async Task<IActionResult> Submit(string strInput)         // We like this, but it doesn't work. :-(
         public async Task<IActionResult> Submit()
         {
-            _logger.LogError($"SelfServiceSignUpNotifyController: API Connector called.");
-            // _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: API Connector called.");
-
             string strInput = String.Empty;
 
             using (var reader = new StreamReader(Request.Body))
             {
-                // var body = await reader.ReadToEndAsync();
-                // inputClaims = JsonConvert.DeserializeObject<SubmitInputModel>(body);
-                // inputClaims.inputData = body;
-
                 strInput = await reader.ReadToEndAsync();
             }
 
@@ -79,36 +71,34 @@
                 return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
-            _logger.LogError(strInput);
-
             // We get Json - send it to be parsed in the SubmitInputModel constructor
-            SubmitInputModel input = null;
+            SubmitInputModel simInputValues = null;
             try
             {
-                input = new SubmitInputModel(strInput);
+                simInputValues = new SubmitInputModel(strInput);
 
-                if (input == null)
+                if (simInputValues == null)
                 {
-                    string strError = "Can not deserialize input claims.";
+                    string strError = "Can not deserialize simInputValues claims.";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
-                if (string.IsNullOrEmpty(input.email))
+                if (string.IsNullOrEmpty(simInputValues.email))
                 {
                     string strError = "The value entered for email is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("EmailEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
-                if (string.IsNullOrEmpty(input.displayName))
+                if (string.IsNullOrEmpty(simInputValues.displayName))
                 {
                     string strError = "The value entered for display name is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("DisplayNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
-                if (string.IsNullOrEmpty(input.OrganizationName))
+                if (string.IsNullOrEmpty(simInputValues.Organization))
                 {
                     string strError = "The value entered for organization name is invalid";
                     _logger.LogError(strError);
@@ -124,10 +114,10 @@
             // Send email that we have created a new user account
             string strSender = "paul.yao@c-labs.com";
             string strRecipient = "paul.yao@c-labs.com";
-            string strUserName = input.displayName;
-            string strUserOrganization =  input.OrganizationName;
-            string strOrgCesmiiMember = input.CESMIIMember;
-            string strUserEmail = input.email;
+            string strUserName = simInputValues.displayName;
+            string strUserOrganization =  simInputValues.Organization;
+            string strOrgCesmiiMember = simInputValues.CESMIIMember;
+            string strUserEmail = simInputValues.email;
 
 
             string strSubject = "CESMII New User Sign Up";

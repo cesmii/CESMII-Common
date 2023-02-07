@@ -46,7 +46,7 @@ namespace CESMII.Common.SelfServiceSignUp.Models
 
         public string? ui_locales { get; set; }
 
-        public string? OrganizationName { get; set; }
+        public string? Organization { get; set; }
 
         public string? CESMIIMember { get; set; }
 
@@ -65,7 +65,7 @@ namespace CESMII.Common.SelfServiceSignUp.Models
             data.Locale = ui_locales;
             data.InputData = inputData; 
             data.ApprovalStatus = "Pending";
-            data.Organization = OrganizationName;
+            data.Organization = Organization;
             data.CESMIIMember = CESMIIMember.ToLower()=="true" ? true : false;
 
             return data;
@@ -101,7 +101,7 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                                         case "ui_locales": this.ui_locales = strValue; break;
                                         default:
                                             if (strName.EndsWith("_Organization"))
-                                                OrganizationName = strValue;
+                                                Organization = strValue;
                                             else if (strName.EndsWith("_CESMIIMember"))
                                                 CESMIIMember = strValue;
                                             break;
