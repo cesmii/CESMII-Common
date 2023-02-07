@@ -48,6 +48,7 @@
         {
             this._logger = logger;
             this._mailService = mailservice;
+            _logger.LogError($"SelfServiceSignUpNotifyController: SelfServiceSignUpNotifyController()");
         }
 
         [HttpPost]
@@ -56,7 +57,8 @@
         // public async Task<IActionResult> Submit(SubmitInputModel input)
         public async Task<IActionResult> Submit(string strInput)
         {
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: API Connector called.");
+            _logger.LogError($"SelfServiceSignUpNotifyController: API Connector called.");
+            // _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: API Connector called.");
 
             // We get Json - send it to be parsed in the SubmitInputModel constructor
             SubmitInputModel input = null;
@@ -118,7 +120,8 @@
                                 $"<p>The Automated Sign-Up System (Updated 1/23/2023 at 12:17pm) </p>" +
                                 $"<p></p>";
 
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
+            //_logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
+            _logger.LogError($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
 
             MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
 

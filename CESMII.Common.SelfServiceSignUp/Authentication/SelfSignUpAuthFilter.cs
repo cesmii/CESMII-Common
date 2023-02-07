@@ -45,7 +45,6 @@
                             .Split(':', 2);
                         if (credentials.Length == 2)
                         {
-                            _logger.LogError($"OnAuthorization (FromBase64): {credentials[0]} {credentials[1]}");
                             if (IsAuthorized(context, credentials[0], credentials[1]))
                             {
                                 _logger.LogInformation($"OnAuthorization: Valid!");
@@ -79,11 +78,7 @@
             string strConfigUser = (string)_config.GetValue(typeof(string), "ApiUsername");
             string strConfigPwd = (string)_config.GetValue(typeof(string), "ApiPassword");
 
-            if (string.IsNullOrEmpty(strConfigUser)) strConfigUser = "[Null]";
-            if (string.IsNullOrEmpty(strConfigPwd)) strConfigPwd = "[Null]";
-
-            _logger.LogError($"OnAuthorization (Config): {strConfigUser} {strConfigPwd}");
-            if (username.Equals(_config.GetValue(typeof(string), "ApiUsername")) && password.Equals(_config.GetValue(typeof(string), "ApiPassword")))
+            if (username.Equals(strConfigUser) && password.Equals(strConfigPwd))
             {
                 return true;
             }
