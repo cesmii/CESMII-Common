@@ -104,12 +104,15 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                                             {
                                                 Organization = strValue;
                                             }
-                                            else if (strName.EndsWith("_CESMIIMember"))
-                                            {
-                                                bool bValue = (bool)reader.Value;
-                                                CESMIIMember = (bValue) ? "Yes" : "No";
-                                            }
                                             break;
+                                    }
+                                }
+                                else if (reader.TokenType == JsonToken.Boolean&& reader.Value != null)
+                                {
+                                    if (strName.EndsWith("_CESMIIMember"))
+                                    {
+                                        bool bValue = (bool)reader.Value;
+                                        CESMIIMember = (bValue) ? "Yes" : "No";
                                     }
                                 }
                             }

@@ -54,11 +54,13 @@
         [SelfSignUpAuth]
         [ActionName("submit")]
         // public async Task<IActionResult> Submit(SubmitInputModel input)  // Azure AD seems to like this - probably with [FromBody]
-        // public async Task<IActionResult> Submit(string strInput)         // We like this, but it doesn't work. :-(
+        // public async Task<IActionResult> Submit(string strInput)         // We like this, but Azure doesn't like this. :-(
         public async Task<IActionResult> Submit()
         {
-            string strInput = String.Empty;
 
+            // To avoid weirdly long names for custom user attributes, we
+            // read these values in ourselves then smartly parse them.
+            string strInput = String.Empty;
             using (var reader = new StreamReader(Request.Body))
             {
                 strInput = await reader.ReadToEndAsync();
@@ -86,21 +88,21 @@
 
                 if (string.IsNullOrEmpty(simInputValues.email))
                 {
-                    string strError = "The value entered for email is invalid";
+                    string strError = "The value entered for Email is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("EmailEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.displayName))
                 {
-                    string strError = "The value entered for display name is invalid";
+                    string strError = "The value entered for Display Name is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("DisplayNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.Organization))
                 {
-                    string strError = "The value entered for organization name is invalid";
+                    string strError = "The value entered for Organization is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("OrganizationNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
@@ -112,16 +114,14 @@
             }
 
             // Send email that we have created a new user account
-            //string strSender = String.Empty; // "paul.yao@c-labs.com";
-            //string strRecipient = String.Empty; // "paul.yao@c-labs.com";
             string strUserName = simInputValues.displayName;
             string strUserOrganization =  simInputValues.Organization;
             string strOrgCesmiiMember = simInputValues.CESMIIMember;
             string strUserEmail = simInputValues.email;
 
 
-            string strSubject = "CESMII New User Sign Up";
-            string strContent = $"<p>A new user has signed up as a CESMII.org user.</p>" +
+            string strSubject = "CESMII User Sign Up";
+            string strContent = $"<p>A new user has signed themselves up as a CESMII.org user.</p>" +
                                 $"<p></p>" +
                                 $"<p>User Name: <strong>{strUserName}</strong> ({strUserEmail})</p>" +
                                 $"<p>Organization: <strong>{strUserOrganization}</strong></p>" +
@@ -132,7 +132,7 @@
                                 $"<p></p>";
 
             //_logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
-            _logger.LogError($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
+            // _logger.LogError($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
 
             // MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
             MailMessage mm = new MailMessage()
@@ -143,7 +143,7 @@
 
             await _mailService.SendEmailSendGrid(mm);
 
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
+            // _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
 
             // Let's go ahead and create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
