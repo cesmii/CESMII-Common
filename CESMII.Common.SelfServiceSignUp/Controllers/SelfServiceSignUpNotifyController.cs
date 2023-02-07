@@ -131,10 +131,8 @@
                                 $"<p>The Automated Self-Service Sign-Up System</p>" +
                                 $"<p></p>";
 
-            //_logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
-            // _logger.LogError($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
+            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
 
-            // MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
             MailMessage mm = new MailMessage()
                             {
                                 Subject = strSubject,
@@ -143,7 +141,7 @@
 
             await _mailService.SendEmailSendGrid(mm);
 
-            // _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
+            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
 
             // Let's go ahead and create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));

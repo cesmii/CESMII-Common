@@ -28,7 +28,6 @@
         {
             _config = new ConfigUtil(configuration).MailSettings;
             _logger = logger;
-            _logger.LogError("MailRelayService::MailRelayService() - constructor called");
         }
 
         public async Task<bool> SendEmail(MailMessage message)
@@ -49,6 +48,7 @@
                     }
                     break;
                 default:
+                    _logger.LogError("MailRelayService::SendEmail - Provider key value is invalid");
                     throw new InvalidOperationException("The configured email provider is invalid.");
             }
             return true;
@@ -141,33 +141,26 @@
 
         internal async Task<bool> SendEmailSendGrid(MailMessage message)
         {
-            bool bReturn = false;
+            bool bSuccess = false;
             try
             {
-                _config.MailFromAddress = "paul.yao@c-labs.com";
-                _config.MailFromAppName = "Profile Designer (Staging)";
+                //_config.MailFromAddress = "paul.yao@c-labs.com";
+                //_config.MailFromAppName = "Profile Designer (Staging)";
                 string strApiKey = _config.ApiKey;
-                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
-                _logger.LogError($"MailRelayService: From: {_config.MailFromAddress}");
-                _logger.LogError($"MailRelayService: AppName: {_config.MailFromAppName}");
-                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
-                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
 
                 var client = new SendGridClient(strApiKey);
                 var from = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
                 var subject = message.Subject;
 
-                _logger.LogError($"MailRelayService: Subject: {subject}");
-
                 var mailTo = new List<EmailAddress>();
                 // If Mail Relay is in debug mode set all addresses to the configuration file.
                 if (_config.Debug)
                 {
-                    _logger.LogError($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
+                    _logger.LogInformation($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
                     foreach (var address in _config.DebugToAddresses)
                     {
                         mailTo.Add(new EmailAddress(address));
-                        _logger.LogError($"Adding Email To: {address}");
+                        _logger.LogInformation($"Adding Email To: {address}");
                     }
                 }
                 else
@@ -175,26 +168,24 @@
                     foreach (var address in _config.ToAddresses)
                     {
                         mailTo.Add(new EmailAddress(address));
-                        _logger.LogError($"Adding Email To: {address}");
+                        _logger.LogInformation($"Adding Email To: {address}");
                     }
                 }
 
-                _logger.LogError($"Total Recipient Count = {mailTo.Count}");
-
-                _logger.LogError("MailRelayService: SendEmailSendGrid About to call CreateSingleEmailToMultipleRecipients");
-
                 var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, mailTo, subject, null, message.Body);
 
-                _logger.LogError("MailRelayService: SendEmailSendGrid About to call SendEmailAsync");
                 var response = await client.SendEmailAsync(msg);
                 if (response == null)
                 {
-                    _logger.LogError("MailRelayService: SendEmailSendGrid error - response == null");
+                    _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Response is null");
                 }
                 else
                 {
-                    _logger.LogError($"MailRelayService: SendEmailSendGrid Status Code: {response.StatusCode} IsSuccess: {response.IsSuccessStatusCode}");
-                    bReturn = true;
+                    bSuccess = response.IsSuccessStatusCode;
+                    if (!bSuccess)
+                    {
+                        _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Status Code: {response.StatusCode}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -202,7 +193,7 @@
                 _logger.LogError($"MailRelayService: Exception -- {ex.Message}");
             }
 
-            return bReturn;
+            return bSuccess;
         }
 
     }
