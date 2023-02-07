@@ -101,9 +101,14 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                                         case "ui_locales": this.ui_locales = strValue; break;
                                         default:
                                             if (strName.EndsWith("_Organization"))
+                                            {
                                                 Organization = strValue;
+                                            }
                                             else if (strName.EndsWith("_CESMIIMember"))
-                                                CESMIIMember = strValue;
+                                            {
+                                                bool bValue = (bool)reader.Value;
+                                                CESMIIMember = (bValue) ? "Yes" : "No";
+                                            }
                                             break;
                                     }
                                 }
