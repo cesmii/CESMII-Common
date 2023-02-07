@@ -29,7 +29,11 @@
             try
             {
                 string authHeader = context.HttpContext.Request.Headers["Authorization"];
-                if (authHeader != null)
+                if (authHeader == null)
+                {
+                    _logger.LogError("OnAuthorization: authHeader == null.");
+                }
+                else
                 {
                     var authHeaderValue = AuthenticationHeaderValue.Parse(authHeader);
                     //var authHeaderValue = this.Parse(authHeader);
@@ -41,11 +45,16 @@
                             .Split(':', 2);
                         if (credentials.Length == 2)
                         {
+                            _logger.LogError($"OnAuthorization (FromBase64): {credentials[0]} {credentials[1]}");
                             if (IsAuthorized(context, credentials[0], credentials[1]))
                             {
                                 _logger.LogInformation($"OnAuthorization: Valid!");
                                 return;
                             }
+                        }
+                        else
+                        {
+                            _logger.LogError("OnAuthorization: credentials.Length != 2.");
                         }
                     }
                 }
@@ -67,6 +76,13 @@
 
         private bool IsValidUser(string username, string password)
         {
+            string strConfigUser = (string)_config.GetValue(typeof(string), "ApiUsername");
+            string strConfigPwd = (string)_config.GetValue(typeof(string), "ApiPassword");
+
+            if (string.IsNullOrEmpty(strConfigUser)) strConfigUser = "[Null]";
+            if (string.IsNullOrEmpty(strConfigPwd)) strConfigPwd = "[Null]";
+
+            _logger.LogError($"OnAuthorization (Config): {strConfigUser} {strConfigPwd}");
             if (username.Equals(_config.GetValue(typeof(string), "ApiUsername")) && password.Equals(_config.GetValue(typeof(string), "ApiPassword")))
             {
                 return true;
