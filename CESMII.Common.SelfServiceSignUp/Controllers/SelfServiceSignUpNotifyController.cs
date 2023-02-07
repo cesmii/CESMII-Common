@@ -79,6 +79,8 @@
                 return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
+            _logger.LogError(strInput);
+
             // We get Json - send it to be parsed in the SubmitInputModel constructor
             SubmitInputModel input = null;
             try
