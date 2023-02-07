@@ -145,19 +145,27 @@
             try
             {
                 string strApiKey = _config.ApiKey;
-                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry] - {strApiKey}");
+                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
+                _logger.LogError($"MailRelayService: From: {_config.MailFromAddress}");
+                _logger.LogError($"MailRelayService: AppName: {_config.MailFromAppName}");
+                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
+                _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
 
                 var client = new SendGridClient(strApiKey);
                 var from = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
                 var subject = message.Subject;
+
+                _logger.LogError($"MailRelayService: Subject: {subject}");
+
                 var mailTo = new List<EmailAddress>();
                 // If Mail Relay is in debug mode set all addresses to the configuration file.
                 if (_config.Debug)
                 {
-                    _logger.LogDebug($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
+                    _logger.LogError($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
                     foreach (var address in _config.DebugToAddresses)
                     {
                         mailTo.Add(new EmailAddress(address));
+                        _logger.LogError($"Adding Email To: {address}");
                     }
                 }
                 else
@@ -165,8 +173,11 @@
                     foreach (var address in _config.ToAddresses)
                     {
                         mailTo.Add(new EmailAddress(address));
+                        _logger.LogError($"Adding Email To: {address}");
                     }
                 }
+
+                _logger.LogError($"Total Recipient Count = {mailTo.Count}");
 
                 _logger.LogError("MailRelayService: SendEmailSendGrid About to call CreateSingleEmailToMultipleRecipients");
 
@@ -180,7 +191,7 @@
                 }
                 else
                 {
-                    _logger.LogError("MailRelayService: SendEmailSendGrid success");
+                    _logger.LogError($"MailRelayService: SendEmailSendGrid Status Code: {response.StatusCode} IsSuccess: {response.IsSuccessStatusCode}");
                     bReturn = true;
                 }
             }
