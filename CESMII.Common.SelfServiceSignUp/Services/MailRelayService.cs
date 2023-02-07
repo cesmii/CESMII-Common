@@ -144,6 +144,8 @@
             bool bReturn = false;
             try
             {
+                _config.MailFromAddress = "paul.yao@c-labs.com";
+                _config.MailFromAppName = "Profile Designer (Staging)";
                 string strApiKey = _config.ApiKey;
                 _logger.LogError($"MailRelayService: SendEmailSendGrid [Entry]");
                 _logger.LogError($"MailRelayService: From: {_config.MailFromAddress}");
