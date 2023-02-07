@@ -55,10 +55,22 @@
         [SelfSignUpAuth]
         [ActionName("submit")]
         // public async Task<IActionResult> Submit(SubmitInputModel input)
-        public async Task<IActionResult> Submit(string strInput)
+        // public async Task<IActionResult> Submit(string strInput)
+        public async Task<IActionResult> Submit()
         {
             _logger.LogError($"SelfServiceSignUpNotifyController: API Connector called.");
             // _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: API Connector called.");
+
+            string strInput = String.Empty;
+
+            using (var reader = new StreamReader(Request.Body))
+            {
+                // var body = await reader.ReadToEndAsync();
+                // inputClaims = JsonConvert.DeserializeObject<SubmitInputModel>(body);
+                // inputClaims.inputData = body;
+
+                strInput = await reader.ReadToEndAsync();
+            }
 
             // We get Json - send it to be parsed in the SubmitInputModel constructor
             SubmitInputModel input = null;
