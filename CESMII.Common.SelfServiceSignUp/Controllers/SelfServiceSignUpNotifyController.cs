@@ -112,8 +112,8 @@
             }
 
             // Send email that we have created a new user account
-            string strSender = "paul.yao@c-labs.com";
-            string strRecipient = "paul.yao@c-labs.com";
+            //string strSender = String.Empty; // "paul.yao@c-labs.com";
+            //string strRecipient = String.Empty; // "paul.yao@c-labs.com";
             string strUserName = simInputValues.displayName;
             string strUserOrganization =  simInputValues.Organization;
             string strOrgCesmiiMember = simInputValues.CESMIIMember;
@@ -128,13 +128,18 @@
                                 $"<p>CESMII Member? <strong>{strOrgCesmiiMember}</strong></p>" +
                                 $"<p></p>" +
                                 $"<p>Sincerely,</p>" +
-                                $"<p>The Automated Sign-Up System (Updated 1/23/2023 at 12:17pm) </p>" +
+                                $"<p>The Automated Self-Service Sign-Up System</p>" +
                                 $"<p></p>";
 
             //_logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
             _logger.LogError($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
 
-            MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
+            // MailMessage mm = new MailMessage(strSender, strRecipient, strSubject, strContent);
+            MailMessage mm = new MailMessage()
+                            {
+                                Subject = strSubject,
+                                Body = strContent
+                            };
 
             await _mailService.SendEmailSendGrid(mm);
 
