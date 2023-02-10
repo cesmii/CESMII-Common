@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-
-using Opc.Ua.Cloud.Library.Client;
-using CESMII.OpcUa.NodeSetImporter;
+﻿using Opc.Ua.Cloud.Library.Client;
+using System.Runtime.Serialization;
 
 namespace CESMII.Common.CloudLibClient
 {
@@ -12,5 +9,29 @@ namespace CESMII.Common.CloudLibClient
         Task<UANameSpace?> DownloadAsync(string id);
         Task<UANameSpace?> GetAsync(string modelUri, DateTime? publicationDate, bool exactMatch);
         Task<string> UploadAsync(UANameSpace uaNamespace);
+        Task<GraphQlResult<Nodeset>> GetNodeSetsPendingApprovalAsync(int? limit, string cursor, bool pageBackwards, bool noTotalCount = false, UAProperty? prop = null);
+        Task<UANameSpace?> UpdateApprovalStatusAsync(string nodeSetId, string newStatus, string statusInfo, UAProperty? additionalProperty = null);
+
     }
+
+    [Serializable]
+    public class UploadException : Exception
+    {
+        public UploadException()
+        {
+        }
+
+        public UploadException(string? message) : base(message)
+        {
+        }
+
+        public UploadException(string? message, Exception? innerException) : base(message, innerException)
+        {
+        }
+
+        protected UploadException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+
 }

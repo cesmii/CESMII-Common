@@ -611,8 +611,294 @@ query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: Dat
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
             }
         }
-
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="namespaceUri"></param>
+        /// <param name="publicationDate"></param>
+        /// <param name="additionalProperty"></param>
+        /// <param name="after"></param>
+        /// <param name="first"></param>
+        /// <param name="last"></param>
+        /// <param name="before"></param>
+        /// <param name="noMetadata"></param>
+        /// <param name="noTotalCount"></param>
+        /// <param name="noRequiredModels"></param>
+        /// <returns></returns>
+        /// <exception cref="GraphQlNotSupportedException"></exception>
+        public async Task<GraphQlResult<Nodeset>> GetNodeSetsPendingApprovalAsync(string namespaceUri = null, DateTime? publicationDate = null, UAProperty additionalProperty = null, 
+    string after = null, int? first = null, int? last = null, string before = null, bool noMetadata = false, bool noTotalCount = false, bool noRequiredModels = false)
+        {
+            var request = new GraphQLRequest();
+            var totalCountFragment = noTotalCount ? "" : "totalCount ";
+            var metadataFragment = noMetadata ? "" : @"
+          metadata {
+            contributor {
+              description
+              contactEmail
+              logoUrl
+              name
+              website
+            }
+            category {
+              description
+              iconUrl
+              name
+            }
+            additionalProperties {
+              name
+              value
+            }
+            copyrightText
+            description
+            documentationUrl
+            iconUrl
+            keywords
+            license
+            licenseUrl
+            numberOfDownloads
+            purchasingInformationUrl
+            releaseNotesUrl
+            supportedLocales
+            testSpecificationUrl
+            title
+            validationStatus
+            approvalStatus
+            approvalInformation
+          }
+            ";
+
+            var requiredModelFragment = noRequiredModels ? "" : @"
+          requiredModels {
+            modelUri
+            publicationDate
+            version
+            availableModel {
+              modelUri
+              publicationDate
+              version
+              identifier
+              requiredModels {
+                modelUri
+                publicationDate
+                version
+                availableModel {
+                  modelUri
+                  publicationDate
+                  version
+                  identifier
+                  requiredModels {
+                    modelUri
+                    publicationDate
+                    version
+                    availableModel {
+                      modelUri
+                      publicationDate
+                      version
+                      identifier
+                    }
+                  }
+                }
+              }
+            }
+          }
+            ";
+            string whereClause = "";
+            string variableParams = "";
+            if (namespaceUri != null)
+            {
+                whereClause = @"where: {modelUri: {eq: $namespaceUri}";
+                if (publicationDate != null)
+                {
+                    whereClause += ", publicationDate: {eq: $publicationDate}";
+                }
+                variableParams += "$namespaceUri: String, $publicationDate: DateTime, ";
+            }
+            if (additionalProperty != null)
+            {
+                if (string.IsNullOrEmpty(whereClause))
+                {
+                    whereClause = @"where: {";
+                }
+                whereClause += @"
+and: { 
+  metadata: {
+    additionalProperties: {
+      some: {
+        name: {eq: $propName},
+        value: {endsWith: $propValue}
+      }
+    }
+  }
+}";
+                variableParams += "$propName: String, $propValue: String, ";
+
+            }
+            if (!string.IsNullOrEmpty(whereClause))
+            {
+                whereClause += "}, ";
+            }
+            request.Query = $@"
+query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $last:Int) {{
+  nodeSetsPendingApproval({whereClause}after: $after, first: $first, before: $before, last: $last) {{
+    {totalCountFragment}
+    pageInfo {{
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }}
+    edges {{
+      cursor
+        node {{
+          modelUri
+          publicationDate
+          version
+          identifier
+          validationStatus
+{metadataFragment}
+{requiredModelFragment}
+        }}
+    }}
+  }}
+}}
+";
+            if (namespaceUri != null && additionalProperty != null)
+            {
+                request.Variables = new
+                {
+                    namespaceUri = namespaceUri,
+                    publicationDate = publicationDate,
+                    propName = additionalProperty?.Name,
+                    propValue = additionalProperty?.Value,
+                    after = after,
+                    first = first,
+                    before = before,
+                    last = last,
+                };
+            }
+            else if (namespaceUri != null)
+            {
+                request.Variables = new
+                {
+                    namespaceUri = namespaceUri,
+                    publicationDate = publicationDate,
+                    after = after,
+                    first = first,
+                    before = before,
+                    last = last,
+                };
+            }
+            else if (additionalProperty != null)
+            {
+                request.Variables = new
+                {
+                    propName = additionalProperty?.Name,
+                    propValue = additionalProperty?.Value,
+                    after = after,
+                    first = first,
+                    before = before,
+                    last = last,
+                };
+            }
+            else
+            {
+                request.Variables = new
+                {
+                    after = after,
+                    first = first,
+                    before = before,
+                    last = last,
+                };
+
+            }
+            GraphQlResult<Nodeset> result = null;
+            try
+            {
+                var graphQlResult = await SendAndConvertAsync<GraphQlResult<GraphQLNodeSet>>(request).ConfigureAwait(false);
+                result = new GraphQlResult<Nodeset>(graphQlResult)
+                {
+                    TotalCount = graphQlResult.TotalCount,
+                    Edges = graphQlResult?.Edges.Select(n =>
+                        new GraphQlNodeAndCursor<Nodeset>
+                        {
+                            Cursor = n.Cursor,
+                            Node = n.Node.ToNodeSet(),
+                        }).ToList(),
+                };
+                return result;
+            }
+            catch (HttpRequestException ex)
+#if !NETSTANDARD2_0
+            when (ex.StatusCode == HttpStatusCode.NotFound)
+#endif
+            {
+                Console.WriteLine("Error: " + ex.Message + " Cloud Library does not support GraphQL.");
+                throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
+            }
+        }
+
+        public async Task<UANameSpace> UpdateApprovalStatusAsync(string nodeSetId, string newStatus, string statusInfo, UAProperty additionalProperty)
+        {
+            var request = new GraphQLRequest();
+
+            string propVariables = additionalProperty != null ? ", $propName: String, $propValue: String" : "";
+            string propArgs = additionalProperty != null ? ", additionalProperties: [{key: $propName, value: $propValue},]" : "";
+            request.Query = $@"
+mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $approvalInfo: String{propVariables}) {{
+  approveNodeSet(input: {{status: $newStatus, identifier: $identifier, approvalInformation: $approvalInfo{propArgs}}})
+    {{
+        title
+        additionalProperties {{
+            name
+            value
+        }}
+        nodeset {{
+            identifier
+            namespaceUri
+            version
+        }}
+    }}
+}}
+";
+            request.OperationName = "ApprovalMutation";
+            if (additionalProperty != null)
+            {
+                request.Variables = new
+                {
+                    identifier = nodeSetId,
+                    newStatus = newStatus,
+                    approvalInfo = statusInfo,
+                    propName = additionalProperty?.Name,
+                    propValue = additionalProperty?.Value,
+                };
+            }
+            else 
+            {
+                request.Variables = new
+                {
+                    identifier = nodeSetId,
+                    newStatus = newStatus,
+                    approvalInfo = statusInfo,
+                };
+            }
+            try
+            {
+                var result = await SendAndConvertAsync<UANameSpace>(request).ConfigureAwait(false);
+                return result;
+            }
+            catch (HttpRequestException ex)
+#if !NETSTANDARD2_0
+            when (ex.StatusCode == HttpStatusCode.NotFound)
+#endif
+            {
+                Console.WriteLine("Error: " + ex.Message + " Cloud Library does not support GraphQL.");
+                throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
+            }
+        }
+
+
+        /// <summary>  
         /// Queries one or more node sets and their dependencies
         /// </summary>
         /// <param name="identifier"></param>

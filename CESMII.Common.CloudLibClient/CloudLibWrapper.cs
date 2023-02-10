@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Net.Http;
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 using Opc.Ua.Cloud.Library.Client;
-using CESMII.OpcUa.NodeSetImporter;
 using Microsoft.Extensions.Options;
 
 namespace CESMII.Common.CloudLibClient
@@ -69,13 +61,31 @@ namespace CESMII.Common.CloudLibClient
         public async Task<string> UploadAsync(UANameSpace uaNamespace)
         {
             var result = await _client.UploadNodeSetAsync(uaNamespace);
-            if (result.Status == System.Net.HttpStatusCode.OK)
+            if (result.Status != System.Net.HttpStatusCode.OK)
             {
-                #pragma warning disable 8603
-                return null;
-                #pragma warning restore 8603
+                throw new UploadException(result.Message);
             }
             return result.Message;
         }
+
+        public async Task<GraphQlResult<Nodeset>> GetNodeSetsPendingApprovalAsync(int? limit, string cursor, bool pageBackwards, bool noTotalCount = false, UAProperty? prop = null)
+        {
+            GraphQlResult<Nodeset> result;
+            if (!pageBackwards)
+            {
+                result = await _client.GetNodeSetsPendingApprovalAsync(after: cursor, first: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, additionalProperty: prop);
+            }
+            else
+            {
+                result = await _client.GetNodeSetsPendingApprovalAsync(before: cursor, last: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, additionalProperty: prop);
+            }
+            return result;
+        }
+
+        public Task<UANameSpace?> UpdateApprovalStatusAsync(string nodeSetId, string newStatus, string statusInfo, UAProperty? additionalProperty = null)
+        {
+            return _client.UpdateApprovalStatusAsync(nodeSetId, newStatus, statusInfo, additionalProperty);
+        }
     }
+
 }

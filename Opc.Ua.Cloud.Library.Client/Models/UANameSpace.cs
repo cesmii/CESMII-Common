@@ -147,6 +147,14 @@ namespace Opc.Ua.Cloud.Library.Client
         [JsonProperty("validationStatus")]
         public string ValidationStatus { get; set; }
 
+        /// <summary>
+        /// Status
+        /// </summary>
+        public string ApprovalStatus { get; set; }
+        /// <summary>
+        /// Additional information about the status
+        /// </summary>
+        public string ApprovalInformation { get; set; }
 
         /// <summary>Gets or sets the additional properties.</summary>
         /// <value>The additional properties.</value>
