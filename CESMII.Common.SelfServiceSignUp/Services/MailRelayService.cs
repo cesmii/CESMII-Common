@@ -160,7 +160,8 @@
                     foreach (var address in _config.ToAddresses)
                     {
                         leaTo.Add(new EmailAddress(address));
-                        _logger.LogInformation($"Adding Email To: {address}");
+                        // _logger.LogInformation($"Adding Email To: {address}");
+                        _logger.LogError($"Adding Email To: {address}");
                     }
                 }
 
@@ -177,21 +178,24 @@
         }
 
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo)
-            {
+        {
             bool bSuccess = false;
 
             //_config.MailFromAddress = "paul.yao@c-labs.com";
             //_config.MailFromAppName = "Profile Designer (Staging)";
 
             string strApiKey = _config.ApiKey;
+            _logger.LogError($"MailRelayService::SendEmailSendGrid - APIKey = {strApiKey}");
 
             var eaFrom = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
+            _logger.LogError($"MailRelayService::SendEmailSendGrid - MailFromAddress = {_config.MailFromAddress} and MailFromAppName = {_config.MailFromAppName}");
 
             var client = new SendGridClient(strApiKey);
-                var subject = message.Subject;
+            var subject = message.Subject;
+            _logger.LogError($"MailRelayService::SendEmailSendGrid - subject = {subject}");
 
 
-                var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
+            var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
 
                 var response = await client.SendEmailAsync(msg);
                 if (response == null)
