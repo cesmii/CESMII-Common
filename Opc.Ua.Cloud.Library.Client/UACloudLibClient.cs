@@ -46,7 +46,7 @@ namespace Opc.Ua.Cloud.Library.Client
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
-    using Opc.Ua.Cloud.Library.Client;
+
     /// <summary>
     /// This class handles the quering and conversion of the response
     /// </summary>
@@ -475,7 +475,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <param name="noRequiredModels">Don't request Nodeset.RequiredModels (performance)</param>
         /// <param name="last">Pagination: minimum number of nodes to return, use with before for backward paging.</param>
         /// <returns>The metadata for the requested nodesets, as well as the metadata for all required notesets.</returns>
-        public async Task<GraphQlResult<Nodeset>> GetNodeSetsAsync(string identifier = null, string namespaceUri = null, DateTime? publicationDate = null, string[] keywords = null,
+        public async Task<GraphQlResult<Nodeset>> GetNodeSetsAsync(string identifier = null, string nodeSetUrl = null, DateTime? publicationDate = null, string[] keywords = null,
             string after = null, int? first = null, int? last = null, string before = null, bool noMetadata = false, bool noTotalCount = false, bool noRequiredModels = false)
         {
             var request = new GraphQLRequest();
@@ -503,19 +503,27 @@ namespace Opc.Ua.Cloud.Library.Client
             {
                 query.AddField(r => r.TotalCount);
             }
+            if (identifier != null) query.AddArgument(nameof(identifier), identifier);
+            if (nodeSetUrl != null) query.AddArgument(nameof(nodeSetUrl), nodeSetUrl);
+            if (publicationDate != null) query.AddArgument(nameof(publicationDate), publicationDate);
+            if (keywords != null) query.AddArgument(nameof(keywords), keywords);
+            if (after != null) query.AddArgument(nameof(after), after);
+            if (first != null) query.AddArgument(nameof(first), first);
+            if (last != null) query.AddArgument(nameof(last), last);
+            if (before != null) query.AddArgument(nameof(before), before);
             request.Query = "query{" + query.Build() + "}";
 
-            request.Variables = new
-            {
-                identifier = identifier,
-                namespaceUri = namespaceUri,
-                publicationDate = publicationDate,
-                keywords = keywords,
-                after = after,
-                first = first,
-                before = before,
-                last = last,
-            };
+            //request.Variables = new
+            //{
+            //    identifier = identifier,
+            //    nodeSetUrl = nodeSetUrl,
+            //    publicationDate = publicationDate,
+            //    keywords = keywords,
+            //    after = after,
+            //    first = first,
+            //    before = before,
+            //    last = last,
+            //};
             GraphQlResult<Nodeset> result = null;
             try
             {
