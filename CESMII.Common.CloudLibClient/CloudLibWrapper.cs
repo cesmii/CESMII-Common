@@ -38,6 +38,14 @@ namespace CESMII.Common.CloudLibClient
             return result;
         }
 
+        public async Task<UANameSpace?> GetAsync(string identifier)
+        {
+            GraphQlResult<Nodeset> result;
+            result = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
+            return result?.Nodes?.FirstOrDefault()?.Metadata;
+        }
+
+
         public async Task<UANameSpace?> GetAsync(string modelUri, DateTime? publicationDate, bool exactMatch)
         {
             uint? id;

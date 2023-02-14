@@ -150,10 +150,12 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// Status
         /// </summary>
+        [JsonProperty("approvalStatus")]
         public string ApprovalStatus { get; set; }
         /// <summary>
         /// Additional information about the status
         /// </summary>
+        [JsonProperty("approvalInformation")]
         public string ApprovalInformation { get; set; }
 
         /// <summary>Gets or sets the additional properties.</summary>
@@ -303,11 +305,13 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// Nodesets that this nodeset depends on
         /// </summary>
+        [JsonProperty("requiredModels")]
         public List<RequiredModelInfo> RequiredModels { get; set; }
 
         /// <summary>
         /// Meta data about the node set that are not captured in the nodeset itself
         /// </summary>
+        [JsonProperty("metadata")]
         public UANameSpace Metadata { get; set; }
 
         /// <summary>

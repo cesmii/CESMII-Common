@@ -29,6 +29,7 @@
 
 namespace Opc.Ua.Cloud.Library.Client
 {
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -42,10 +43,12 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// Cursor of this NodeSet: can be used to retrieve previous of next page
         /// </summary>
+        [JsonProperty("cursor")]
         public string Cursor { get; set; }
         /// <summary>
         /// Data for the node
         /// </summary>
+        [JsonProperty("node")]
         public T Node { get; set; }
     }
 
@@ -71,10 +74,12 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// The total number of nodesets matching the query (ignoring pagination)
         /// </summary>
+        [JsonProperty("totalCount")]
         public int TotalCount { get; set; }
         /// <summary>
         /// Information about the returned page
         /// </summary>
+        [JsonProperty("pageInfo")]
         public GraphQlPageInfo PageInfo { get; set; }
     }
     /// <summary>
@@ -101,18 +106,22 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// Indicates if more pages are available (due to pagination)
         /// </summary>
+        [JsonProperty("hasNextPage")]
         public bool HasNextPage { get; set; }
         /// <summary>
         /// Indicates if more pages are available (due to pagination)
         /// </summary>
+        [JsonProperty("hasPreviousPage")]
         public bool HasPreviousPage { get; set; }
         /// <summary>
         /// Cursor of the last node returned. Can be used to retrieve the next page.
         /// </summary>
+        [JsonProperty("endCursor")]
         public string EndCursor { get; set; }
         /// <summary>
         /// Cursor of the first node returned. Can be used to retrieve the previous page.
         /// </summary>
+        [JsonProperty("startCursor")]
         public string StartCursor { get; set; }
     }
 
@@ -138,11 +147,13 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// Node and Cursor combinations (GraphQl Edges)
         /// </summary>
+        [JsonProperty("edges")]
         public List<GraphQlNodeAndCursor<T>> Edges { get; set; } = new List<GraphQlNodeAndCursor<T>>();
 
         /// <summary>
         /// Nodes
         /// </summary>
+        [JsonProperty("nodes")]
         public IEnumerable<T> Nodes => Edges?.Select(e => e.Node);
     }
 }
