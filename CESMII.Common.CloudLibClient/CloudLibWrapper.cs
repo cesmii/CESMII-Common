@@ -38,15 +38,23 @@ namespace CESMII.Common.CloudLibClient
             return result;
         }
 
+        public async Task<UANameSpace?> GetAsync(string identifier)
+        {
+            GraphQlResult<Nodeset> result;
+            result = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
+            return result?.Nodes?.FirstOrDefault()?.Metadata;
+        }
+
+
         public async Task<UANameSpace?> GetAsync(string modelUri, DateTime? publicationDate, bool exactMatch)
         {
             uint? id;
-            var nodeSetResult = await _client.GetNodeSetsAsync(namespaceUri: modelUri, publicationDate: publicationDate);
+            var nodeSetResult = await _client.GetNodeSetsAsync(nodeSetUrl: modelUri, publicationDate: publicationDate);
             id = nodeSetResult.Edges?.FirstOrDefault()?.Node?.Identifier;
 
             if (id == null && !exactMatch)
             {
-                nodeSetResult = await _client.GetNodeSetsAsync(namespaceUri: modelUri);
+                nodeSetResult = await _client.GetNodeSetsAsync(nodeSetUrl: modelUri);
                 id = nodeSetResult.Edges?.OrderByDescending(n => n.Node.PublicationDate).FirstOrDefault(n => n.Node.PublicationDate >= publicationDate)?.Node?.Identifier;
             }
             if (id == null)

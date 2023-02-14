@@ -29,6 +29,7 @@
 
 namespace Opc.Ua.Cloud.Library.Client
 {
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
@@ -40,11 +41,17 @@ namespace Opc.Ua.Cloud.Library.Client
     /// </summary>
     internal class GraphQLNodeSet
     {
+        [JsonProperty("identifier")]
         public string Identifier { get; set; }
+        [JsonProperty("modelUri")]
         public string ModelUri { get; set; }
+        [JsonProperty("version")]
         public string Version { get; set; }
+        [JsonProperty("publicationDate")]
         public DateTime? PublicationDate { get; set; }
+        [JsonProperty("validationStatus")]
         public string ValidationStatus { get; set; }
+        [JsonProperty("metadata")]
         public UANameSpace Metadata { get; set; }
 
         // RequiredModels
@@ -76,18 +83,22 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <summary>
         /// The namespace URI of the dependency
         /// </summary>
+        [JsonProperty("modelUri")]
         public string ModelUri { get; set; }
         /// <summary>
         /// The minimum required publication date of the dependency
         /// </summary>
+        [JsonProperty("publicationDate")]
         public DateTime? PublicationDate { get; set; }
         /// <summary>
         /// The informational version of the dependency
         /// </summary>
+        [JsonProperty("version")]
         public string Version { get; set; }
         /// <summary>
         /// The best match currently available in the cloud library. null if no match (no nodeset for this namespace uri or only node sets with older publication dates).
         /// </summary>
+        [JsonProperty("availableModel")]
         public GraphQLNodeSet AvailableModel { get; set; }
     }
 }
