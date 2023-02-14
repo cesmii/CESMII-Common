@@ -137,29 +137,21 @@
             return true;
         }
 
-        #pragma warning disable 8600
+#pragma warning disable 8600
 
-        internal async Task<bool> SendEmailSendGrid(MailMessage message)
+        public async Task<bool> SendEmailSendGrid(MailMessage message)
         {
             bool bSuccess = false;
             try
             {
-                //_config.MailFromAddress = "paul.yao@c-labs.com";
-                //_config.MailFromAppName = "Profile Designer (Staging)";
-                string strApiKey = _config.ApiKey;
-
-                var client = new SendGridClient(strApiKey);
-                var from = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
-                var subject = message.Subject;
-
-                var mailTo = new List<EmailAddress>();
+                var leaTo = new List<EmailAddress>();
                 // If Mail Relay is in debug mode set all addresses to the configuration file.
                 if (_config.Debug)
                 {
                     _logger.LogInformation($"Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
                     foreach (var address in _config.DebugToAddresses)
                     {
-                        mailTo.Add(new EmailAddress(address));
+                        leaTo.Add(new EmailAddress(address));
                         _logger.LogInformation($"Adding Email To: {address}");
                     }
                 }
@@ -167,12 +159,39 @@
                 {
                     foreach (var address in _config.ToAddresses)
                     {
-                        mailTo.Add(new EmailAddress(address));
+                        leaTo.Add(new EmailAddress(address));
                         _logger.LogInformation($"Adding Email To: {address}");
                     }
                 }
 
-                var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, mailTo, subject, null, message.Body);
+
+                await SendEmailSendGrid(message, leaTo);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"MailRelayService: Exception -- {ex.Message}");
+            }
+
+            return bSuccess;
+        }
+
+        public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo)
+            {
+            bool bSuccess = false;
+
+            //_config.MailFromAddress = "paul.yao@c-labs.com";
+            //_config.MailFromAppName = "Profile Designer (Staging)";
+
+            string strApiKey = _config.ApiKey;
+
+            var eaFrom = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
+
+            var client = new SendGridClient(strApiKey);
+                var subject = message.Subject;
+
+
+                var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
 
                 var response = await client.SendEmailAsync(msg);
                 if (response == null)
@@ -187,11 +206,6 @@
                         _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Status Code: {response.StatusCode}");
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"MailRelayService: Exception -- {ex.Message}");
-            }
 
             return bSuccess;
         }
