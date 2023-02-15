@@ -55,6 +55,7 @@ namespace Opc.Ua.Cloud.Library.Client
         public UANameSpace Metadata { get; set; }
 
         // RequiredModels
+        [JsonProperty("requiredModels")]
         public List<GraphQlRequiredModelInfo> RequiredModels { get; set; } = new List<GraphQlRequiredModelInfo>();
 
         public Nodeset ToNodeSet()

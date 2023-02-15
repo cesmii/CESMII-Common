@@ -203,7 +203,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <returns></returns>
         public async Task<List<ObjectResult>> GetObjectTypesAsync()
         {
-            IQuery<ObjectResult> objectQuery = new Query<ObjectResult>("objectType")
+            IQuery<ObjectResult> objectQuery = new Query<ObjectResult>("objectType", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.ID)
                 .AddField(f => f.NodesetID)
                 .AddField(f => f.Namespace)
@@ -221,7 +221,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// </summary>
         public async Task<List<MetadataResult>> GetMetadataAsync()
         {
-            IQuery<MetadataResult> metadataQuery = new Query<MetadataResult>("metadata")
+            IQuery<MetadataResult> metadataQuery = new Query<MetadataResult>("metadata", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.ID)
                 .AddField(f => f.NodesetID)
                 .AddField(f => f.Name)
@@ -239,7 +239,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <returns></returns>
         public async Task<List<VariableResult>> GetVariablesAsync()
         {
-            IQuery<VariableResult> variableQuery = new Query<VariableResult>("variabletype")
+            IQuery<VariableResult> variableQuery = new Query<VariableResult>("variabletype", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
             .AddField(f => f.ID)
             .AddField(f => f.NodesetID)
             .AddField(f => f.Namespace)
@@ -258,7 +258,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <returns></returns>
         public async Task<List<ReferenceResult>> GetReferencetypeAsync()
         {
-            IQuery<ReferenceResult> referenceQuery = new Query<ReferenceResult>("referencetype")
+            IQuery<ReferenceResult> referenceQuery = new Query<ReferenceResult>("referencetype", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.ID)
                 .AddField(f => f.NodesetID)
                 .AddField(f => f.Namespace)
@@ -276,7 +276,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// </summary>
         public async Task<List<DataResult>> GetDatatypeAsync()
         {
-            IQuery<DataResult> dataQuery = new Query<DataResult>("datatype")
+            IQuery<DataResult> dataQuery = new Query<DataResult>("datatype", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                .AddField(f => f.ID)
                .AddField(f => f.NodesetID)
                .AddField(f => f.Namespace)
@@ -316,7 +316,7 @@ namespace Opc.Ua.Cloud.Library.Client
         {
             List<UANameSpace> convertedResult = new List<UANameSpace>();
 
-            IQuery<MetadataResult> metadataQuery = new Query<MetadataResult>("metadata")
+            IQuery<MetadataResult> metadataQuery = new Query<MetadataResult>("metadata", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.ID)
                 .AddField(f => f.NodesetID)
                 .AddField(f => f.Name)
@@ -338,8 +338,7 @@ namespace Opc.Ua.Cloud.Library.Client
                 Console.WriteLine("Error: " + ex.Message + " Falling back to REST interface...");
                 List<UANodesetResult> infos = await _restClient.GetBasicNodesetInformationAsync(offset, limit).ConfigureAwait(false);
                 // Match GraphQL
-                infos.ForEach(i =>
-                {
+                infos.ForEach(i => {
                     i.RequiredNodesets = null;
                     i.NameSpaceUri = null;
                 });
@@ -354,7 +353,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// </summary>
         public async Task<List<Organisation>> GetOrganisationsAsync(int limit = 10, IEnumerable<WhereExpression> filter = null)
         {
-            IQuery<Organisation> organisationQuery = new Query<Organisation>("organisation")
+            IQuery<Organisation> organisationQuery = new Query<Organisation>("organisation", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.Name)
                 .AddField(f => f.Website)
                 .AddField(f => f.ContactEmail)
@@ -380,7 +379,7 @@ namespace Opc.Ua.Cloud.Library.Client
         [Obsolete("Use GetNodeSetsAsync instead")]
         public async Task<List<UANameSpace>> GetNameSpacesAsync(int limit = 10, int offset = 0, IEnumerable<WhereExpression> filter = null)
         {
-            IQuery<UANameSpace> namespaceQuery = new Query<UANameSpace>("namespace")
+            IQuery<UANameSpace> namespaceQuery = new Query<UANameSpace>("namespace", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(h => h.Title)
                 .AddField(
                     h => h.Contributor,
@@ -464,7 +463,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// Queries one or more node sets and their dependencies
         /// </summary>
         /// <param name="identifier"></param>
-        /// <param name="namespaceUri"></param>
+        /// <param name="nodeSetUrl"></param>
         /// <param name="publicationDate"></param>
         /// <param name="keywords"></param>
         /// <param name="after">Pagination: cursor of the last node in the previous page, use for forward paging</param>
@@ -479,7 +478,7 @@ namespace Opc.Ua.Cloud.Library.Client
             string after = null, int? first = null, int? last = null, string before = null, bool noMetadata = false, bool noTotalCount = false, bool noRequiredModels = false)
         {
             var request = new GraphQLRequest();
-            IQuery<GraphQlResult<GraphQLNodeSet>> query = new Query<GraphQlResult<GraphQLNodeSet>>("nodeSets")
+            IQuery<GraphQlResult<GraphQLNodeSet>> query = new Query<GraphQlResult<GraphQLNodeSet>>("nodeSets", new QueryOptions {  Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(r => r.PageInfo, pir => pir
                     .AddField(pi => pi.EndCursor)
                     .AddField(pi => pi.HasNextPage)
@@ -505,7 +504,7 @@ namespace Opc.Ua.Cloud.Library.Client
             }
             if (identifier != null) query.AddArgument(nameof(identifier), identifier);
             if (nodeSetUrl != null) query.AddArgument(nameof(nodeSetUrl), nodeSetUrl);
-            if (publicationDate != null) query.AddArgument(nameof(publicationDate), publicationDate);
+            if (publicationDate != null) query.AddArgument(nameof(publicationDate), publicationDate.Value);
             if (keywords != null) query.AddArgument(nameof(keywords), keywords);
             if (after != null) query.AddArgument(nameof(after), after);
             if (first != null) query.AddArgument(nameof(first), first);
@@ -528,12 +527,10 @@ namespace Opc.Ua.Cloud.Library.Client
             try
             {
                 var graphQlResult = await SendAndConvertAsync<GraphQlResult<GraphQLNodeSet>>(request).ConfigureAwait(false);
-                result = new GraphQlResult<Nodeset>(graphQlResult)
-                {
+                result = new GraphQlResult<Nodeset>(graphQlResult) {
                     TotalCount = graphQlResult.TotalCount,
                     Edges = graphQlResult?.Edges.Select(n =>
-                        new GraphQlNodeAndCursor<Nodeset>
-                        {
+                        new GraphQlNodeAndCursor<Nodeset> {
                             Cursor = n.Cursor,
                             Node = n.Node.ToNodeSet(),
                         }).ToList(),
@@ -595,6 +592,7 @@ namespace Opc.Ua.Cloud.Library.Client
                 .AddField(rm => rm.PublicationDate)
                 .AddField(rm => rm.Version)
                 .AddField(rm => rm.AvailableModel, amq => amq
+                    .AddField(am => am.Identifier)
                     .AddField(am => am.ModelUri)
                     .AddField(am => am.PublicationDate)
                     .AddField(am => am.Version)
@@ -603,6 +601,7 @@ namespace Opc.Ua.Cloud.Library.Client
                         .AddField(rm => rm.PublicationDate)
                         .AddField(rm => rm.Version)
                         .AddField(rm => rm.AvailableModel, amq2 => amq2
+                            .AddField(am => am.Identifier)
                             .AddField(am => am.ModelUri)
                             .AddField(am => am.PublicationDate)
                             .AddField(am => am.Version)
@@ -611,6 +610,7 @@ namespace Opc.Ua.Cloud.Library.Client
                                 .AddField(rm => rm.PublicationDate)
                                 .AddField(rm => rm.Version)
                                 .AddField(rm => rm.AvailableModel, amq3 => amq3
+                                    .AddField(am => am.Identifier)
                                     .AddField(am => am.ModelUri)
                                     .AddField(am => am.PublicationDate)
                                     .AddField(am => am.Version)
@@ -776,8 +776,7 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
 ";
             if (namespaceUri != null && additionalProperty != null)
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     namespaceUri = namespaceUri,
                     publicationDate = publicationDate,
                     propName = additionalProperty?.Name,
@@ -790,8 +789,7 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
             }
             else if (namespaceUri != null)
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     namespaceUri = namespaceUri,
                     publicationDate = publicationDate,
                     after = after,
@@ -802,8 +800,7 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
             }
             else if (additionalProperty != null)
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     propName = additionalProperty?.Name,
                     propValue = additionalProperty?.Value,
                     after = after,
@@ -814,8 +811,7 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
             }
             else
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     after = after,
                     first = first,
                     before = before,
@@ -827,12 +823,10 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
             try
             {
                 var graphQlResult = await SendAndConvertAsync<GraphQlResult<GraphQLNodeSet>>(request).ConfigureAwait(false);
-                result = new GraphQlResult<Nodeset>(graphQlResult)
-                {
+                result = new GraphQlResult<Nodeset>(graphQlResult) {
                     TotalCount = graphQlResult.TotalCount,
                     Edges = graphQlResult?.Edges.Select(n =>
-                        new GraphQlNodeAndCursor<Nodeset>
-                        {
+                        new GraphQlNodeAndCursor<Nodeset> {
                             Cursor = n.Cursor,
                             Node = n.Node.ToNodeSet(),
                         }).ToList(),
@@ -848,7 +842,15 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
             }
         }
-
+        /// <summary>
+        /// Administrator only: approved an uploaded nodeset. Only required if cloud library is running with the "CloudLibrary:ApprovalRequired" setting
+        /// </summary>
+        /// <param name="nodeSetId">id to be approved</param>
+        /// <param name="newStatus">approval status to set (APPROVED, PENDING, REJECTED, CANCELED)</param>
+        /// <param name="statusInfo">Optional comment to explain the status, especially REJECTED</param>
+        /// <param name="additionalProperty">Additional properties to be set or removed on the approved nodeset. Value = null or empty string removes the property.</param>
+        /// <returns>The approved namespace metadata if update succeeded. NULL or exception if failed.</returns>
+        /// <exception cref="GraphQlNotSupportedException"></exception>
         public async Task<UANameSpace> UpdateApprovalStatusAsync(string nodeSetId, string newStatus, string statusInfo, UAProperty additionalProperty)
         {
             var request = new GraphQLRequest();
@@ -860,13 +862,14 @@ mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $ap
   approveNodeSet(input: {{status: $newStatus, identifier: $identifier, approvalInformation: $approvalInfo{propArgs}}})
     {{
         title
+        approvalStatus
         additionalProperties {{
             name
             value
         }}
-        nodeset {{
+        nodeSet {{
             identifier
-            namespaceUri
+            modelUri
             version
         }}
     }}
@@ -875,8 +878,7 @@ mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $ap
             request.OperationName = "ApprovalMutation";
             if (additionalProperty != null)
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     identifier = nodeSetId,
                     newStatus = newStatus,
                     approvalInfo = statusInfo,
@@ -886,8 +888,7 @@ mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $ap
             }
             else
             {
-                request.Variables = new
-                {
+                request.Variables = new {
                     identifier = nodeSetId,
                     newStatus = newStatus,
                     approvalInfo = statusInfo,
@@ -984,8 +985,7 @@ query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: Dat
   }
 }
 ";
-            request.Variables = new
-            {
+            request.Variables = new {
                 identifier = identifier,
                 namespaceUri = namespaceUri,
                 publicationDate = publicationDate,
@@ -1043,7 +1043,7 @@ query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: Dat
         /// </summary>
         public async Task<List<Category>> GetNameSpaceCategoriesAsync(int limit = 10, IEnumerable<WhereExpression> filter = null)
         {
-            IQuery<Category> categoryQuery = new Query<Category>("category")
+            IQuery<Category> categoryQuery = new Query<Category>("category", new QueryOptions { Formatter = CamelCasePropertyNameFormatter.Format })
                 .AddField(f => f.Name)
                 .AddField(f => f.Description)
                 .AddField(f => f.IconUrl);
