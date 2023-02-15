@@ -463,7 +463,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// Queries one or more node sets and their dependencies
         /// </summary>
         /// <param name="identifier"></param>
-        /// <param name="nodeSetUrl"></param>
+        /// <param name="modelUri"></param>
         /// <param name="publicationDate"></param>
         /// <param name="keywords"></param>
         /// <param name="after">Pagination: cursor of the last node in the previous page, use for forward paging</param>
@@ -474,7 +474,7 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <param name="noRequiredModels">Don't request Nodeset.RequiredModels (performance)</param>
         /// <param name="last">Pagination: minimum number of nodes to return, use with before for backward paging.</param>
         /// <returns>The metadata for the requested nodesets, as well as the metadata for all required notesets.</returns>
-        public async Task<GraphQlResult<Nodeset>> GetNodeSetsAsync(string identifier = null, string nodeSetUrl = null, DateTime? publicationDate = null, string[] keywords = null,
+        public async Task<GraphQlResult<Nodeset>> GetNodeSetsAsync(string identifier = null, string modelUri = null, DateTime? publicationDate = null, string[] keywords = null,
             string after = null, int? first = null, int? last = null, string before = null, bool noMetadata = false, bool noTotalCount = false, bool noRequiredModels = false)
         {
             var request = new GraphQLRequest();
@@ -503,7 +503,7 @@ namespace Opc.Ua.Cloud.Library.Client
                 query.AddField(r => r.TotalCount);
             }
             if (identifier != null) query.AddArgument(nameof(identifier), identifier);
-            if (nodeSetUrl != null) query.AddArgument(nameof(nodeSetUrl), nodeSetUrl);
+            if (modelUri != null) query.AddArgument(nameof(modelUri), modelUri);
             if (publicationDate != null) query.AddArgument(nameof(publicationDate), publicationDate.Value);
             if (keywords != null) query.AddArgument(nameof(keywords), keywords);
             if (after != null) query.AddArgument(nameof(after), after);
@@ -512,17 +512,6 @@ namespace Opc.Ua.Cloud.Library.Client
             if (before != null) query.AddArgument(nameof(before), before);
             request.Query = "query{" + query.Build() + "}";
 
-            //request.Variables = new
-            //{
-            //    identifier = identifier,
-            //    nodeSetUrl = nodeSetUrl,
-            //    publicationDate = publicationDate,
-            //    keywords = keywords,
-            //    after = after,
-            //    first = first,
-            //    before = before,
-            //    last = last,
-            //};
             GraphQlResult<Nodeset> result = null;
             try
             {
@@ -933,15 +922,15 @@ mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $ap
         /// Queries one or more node sets and their dependencies
         /// </summary>
         /// <param name="identifier"></param>
-        /// <param name="namespaceUri"></param>
+        /// <param name="modelUri"></param>
         /// <param name="publicationDate"></param>
         /// <returns>The metadata for the requested nodesets, as well as the metadata for all required notesets.</returns>
-        public async Task<List<Nodeset>> GetNodeSetDependencies(string identifier = null, string namespaceUri = null, DateTime? publicationDate = null)
+        public async Task<List<Nodeset>> GetNodeSetDependencies(string identifier = null, string modelUri = null, DateTime? publicationDate = null)
         {
             var request = new GraphQLRequest();
             request.Query = @"
-query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: DateTime) {
-  nodeSets(identifier: $identifier, nodeSetUrl: $namespaceUri, publicationDate: $publicationDate) {
+query MyQuery ($identifier: String, $modelUri: String, $publicationDate: DateTime) {
+  nodeSets(identifier: $identifier, modelUri: $modelUri, publicationDate: $publicationDate) {
     nodes {
       modelUri
       publicationDate
@@ -987,7 +976,7 @@ query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: Dat
 ";
             request.Variables = new {
                 identifier = identifier,
-                namespaceUri = namespaceUri,
+                modelUri = modelUri,
                 publicationDate = publicationDate,
             };
             GraphQLNodeResponse<GraphQLNodeSet> result = null;
@@ -1016,7 +1005,7 @@ query MyQuery ($identifier: String, $namespaceUri: String, $publicationDate: Dat
 #pragma warning disable CS0618 // Type or member is obsolete
                     var allNamespaces = await _restClient.GetBasicNodesetInformationAsync().ConfigureAwait(false);
 #pragma warning restore CS0618 // Type or member is obsolete
-                    var namespaceResults = allNamespaces.Where(n => n.NameSpaceUri == namespaceUri && (publicationDate == null || n.PublicationDate == publicationDate));
+                    var namespaceResults = allNamespaces.Where(n => n.NameSpaceUri == modelUri && (publicationDate == null || n.PublicationDate == publicationDate));
                     identifiers = namespaceResults.Select(nr => nr.Id.ToString(CultureInfo.InvariantCulture)).ToList();
                 }
                 foreach (var id in identifiers)

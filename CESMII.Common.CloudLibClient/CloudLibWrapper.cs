@@ -49,12 +49,12 @@ namespace CESMII.Common.CloudLibClient
         public async Task<UANameSpace?> GetAsync(string modelUri, DateTime? publicationDate, bool exactMatch)
         {
             uint? id;
-            var nodeSetResult = await _client.GetNodeSetsAsync(nodeSetUrl: modelUri, publicationDate: publicationDate);
+            var nodeSetResult = await _client.GetNodeSetsAsync(modelUri: modelUri, publicationDate: publicationDate);
             id = nodeSetResult.Edges?.FirstOrDefault()?.Node?.Identifier;
 
             if (id == null && !exactMatch)
             {
-                nodeSetResult = await _client.GetNodeSetsAsync(nodeSetUrl: modelUri);
+                nodeSetResult = await _client.GetNodeSetsAsync(modelUri: modelUri);
                 id = nodeSetResult.Edges?.OrderByDescending(n => n.Node.PublicationDate).FirstOrDefault(n => n.Node.PublicationDate >= publicationDate)?.Node?.Identifier;
             }
             if (id == null)
