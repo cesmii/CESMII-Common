@@ -181,55 +181,104 @@
         {
             bool bSuccess = false;
 
+            if (leaTo == null || leaTo.Count == 0)
+            {
+                _logger.LogError($"SendEmailSendGrid: leaTo is null or empty");
+            }
+            else
+            {
+                int i = 0;
+                foreach (var address in leaTo)
+                {
+                    _logger.LogError($"SendEmailSendGrid - leaTo[{i}] = {address} ");
+                    i++;
+                }
+            }
+
             if (string.IsNullOrEmpty(_config.MailFromAddress))
+            {
                 _config.MailFromAddress = "paul.yao@c-labs.com";
+                _logger.LogError($"SendEmailSendGrid: _config.MailFromAddress was null or empty. Setting to Secret Santa default.");
+            }
 
             if (string.IsNullOrEmpty(_config.MailFromAppName))
+            {
                 _config.MailFromAppName = "Profile Designer (Staging)";
+                _logger.LogError($"SendEmailSendGrid: _config.MailFromAppName was null or empty. Setting to Secret Santa default.");
+            }
 
             string strApiKey = _config.ApiKey;
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - APIKey = {strApiKey}");
 
             var eaFrom = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
 
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Enabled = {_config.Enabled}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Debug = {_config.Debug}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - ToAddresses = {_config.ToAddresses.ToString()}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - DebugToAddresses = {_config.DebugToAddresses.ToString()}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - BaseUrl = {_config.BaseUrl}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - MailFromAddress = {_config.MailFromAddress}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Address = {_config.Address}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Port = {_config.Port}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - EnableSsl = {_config.EnableSsl}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Username = {_config.Username}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Password = {_config.Password}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - TemplateUrls = {_config.TemplateUrls.ToString()}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - Provider = {_config.Provider}");
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - ApiKey = {_config.ApiKey}");
+            if (_config.ToAddresses == null || _config.ToAddresses.Count == 0)
+            {
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - ToAddresses is null or empty");
+            }
+            else
+            {
+                int i = 0;
+                foreach (var address in _config.ToAddresses)
+                {
+                    _logger.LogError($"MailRelayService::SendEmailSendGrid - ToAddresses[{i}] = {address} ");
+                    i++;
+                }
+            }
+
+            try
+            {
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - APIKey = {strApiKey}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Enabled = {_config.Enabled}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Debug = {_config.Debug}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - DebugToAddresses = {_config.DebugToAddresses.ToString()}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - BaseUrl = {_config.BaseUrl}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - MailFromAddress = {_config.MailFromAddress}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Address = {_config.Address}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Port = {_config.Port}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - EnableSsl = {_config.EnableSsl}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Username = {_config.Username}");
+                _logger.LogError($"MailRelayService::SendEmailSendGrid - Password = {_config.Password}");
+                //_logger.LogError($"MailRelayService::SendEmailSendGrid - TemplateUrls = {_config.TemplateUrls.ToString()}");
+                //_logger.LogError($"MailRelayService::SendEmailSendGrid - Provider = {_config.Provider}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"SendEmailSendGrid: Exception in debug code: {ex.Message}");
+            }
 
             var client = new SendGridClient(strApiKey);
             var subject = message.Subject;
-            _logger.LogError($"MailRelayService::SendEmailSendGrid - subject = {subject}");
+            if (string.IsNullOrEmpty(subject))
+            {
+                _logger.LogError($"SendEmailSendGrid: subject was null or empty.");
+            }
+            else
+            {
+                _logger.LogError($"SendEmailSendGrid: subject = {subject}");
 
+            }
 
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
 
-                var response = await client.SendEmailAsync(msg);
-                if (response == null)
+            var response = await client.SendEmailAsync(msg);
+            if (response == null)
+            {
+                _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Response is null");
+            }
+            else
+            {
+                bSuccess = response.IsSuccessStatusCode;
+                if (bSuccess)
                 {
-                    _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Response is null");
+                    _logger.LogError($"MailRelayService: SendEmailSendGrid Success! Status Code: {response.StatusCode}");
                 }
                 else
                 {
-                    bSuccess = response.IsSuccessStatusCode;
-                    if (!bSuccess)
-                    {
-                        _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Status Code: {response.StatusCode}");
-                    }
+                    _logger.LogError($"MailRelayService: SendEmailSendGrid Error. Status Code: {response.StatusCode}");
                 }
+            }
 
             return bSuccess;
         }
-
     }
 }
