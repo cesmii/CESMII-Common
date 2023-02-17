@@ -206,7 +206,11 @@
             }
 
             string strApiKey = _config.ApiKey;
-
+            if (string.IsNullOrEmpty(strApiKey))
+            {
+                _logger.LogError($"SendEmailSendGrid: _config.ApiKey was null or empty. Not sending.");
+                return false;
+            }
             var eaFrom = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
 
             if (_config.ToAddresses == null || _config.ToAddresses.Count == 0)
