@@ -216,6 +216,9 @@
             if (_config.ToAddresses == null || _config.ToAddresses.Count == 0)
             {
                 _logger.LogError($"MailRelayService::SendEmailSendGrid - ToAddresses is null or empty");
+
+                _config.ToAddresses = new List<string>();
+                _config.ToAddresses.Add("paul.yao@c-labs.com");
             }
 
             var client = new SendGridClient(strApiKey);
