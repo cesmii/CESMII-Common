@@ -147,6 +147,8 @@
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, string strCaller = "")
         {
+            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@150 called (caller = {strCaller})");
+
             bool bSuccess = false;
             try
             {
@@ -189,6 +191,8 @@
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo, string strCaller = "")
         {
+            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@192 called (caller = {strCaller})");
+
             bool bSuccess = false;
 
             if (leaTo == null || leaTo.Count == 0)
