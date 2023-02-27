@@ -120,7 +120,7 @@
             string strUserEmail = simInputValues.email;
 
 
-            string strSubject = "CESMII User Sign Up";
+            string strSubject = "CESMII Sign-Up -- A new user has signed up";
             string strContent = $"<p>A new user has signed themselves up as a CESMII.org user.</p>" +
                                 $"<p></p>" +
                                 $"<p>User Name: <strong>{strUserName}</strong> ({strUserEmail})</p>" +
@@ -139,7 +139,7 @@
                                 Body = strContent
                             };
 
-            await _mailService.SendEmailSendGrid(mm);
+            await _mailService.SendEmailSendGrid(mm, "Sssu");
 
             _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
 
