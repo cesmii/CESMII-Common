@@ -42,7 +42,15 @@ namespace CESMII.Common.CloudLibClient
         {
             GraphQlResult<Nodeset> result;
             result = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
-            return result?.Nodes?.FirstOrDefault()?.Metadata;
+
+            var uaNodeSet = result?.Nodes?.FirstOrDefault();
+            var uaNamespace = uaNodeSet?.Metadata;
+            if (uaNodeSet != null)
+            {
+                uaNamespace.Nodeset = uaNodeSet;
+                uaNamespace.Nodeset.Metadata = null;// break the cycle before returning the uaNamespace
+            }
+            return uaNamespace;
         }
 
 
