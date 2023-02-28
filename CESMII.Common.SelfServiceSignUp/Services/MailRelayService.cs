@@ -173,15 +173,23 @@
             }
             else
             {
+                //_config.ApiKey
+                string strResult = PutStringIntoString(_config.ApiKey);
+                sb.Append($"_config.ApiKey: {strResult} $$$ ");
+
                 // _config.Debug
                 sb.Append($"_config.Debug={_config.Debug.ToString()} $$$ ");
+
+                // _config.Enabled
+                sb.Append($"_config.Enabled={_config.Enabled.ToString()} $$$ ");
+
                 //_config.DebugToAddresses
-                string strResult = PutListIntoString(_config.DebugToAddresses);
+                strResult = PutListIntoString(_config.DebugToAddresses);
                 sb.Append($"_config.DebugToAddresses: {strResult} $$$ ");
 
-                //_config.ToAddresses
-                strResult = PutListIntoString(_config.ToAddresses);
-                sb.Append($"_config.ToAddresses: {strResult} $$$ ");
+                //_config.BaseUrl
+                strResult = PutStringIntoString(_config.BaseUrl);
+                sb.Append($"_config.BaseUrl: {strResult} $$$ ");
 
                 //_config.MailFromAddress
                 strResult = PutStringIntoString(_config.MailFromAddress);
@@ -191,9 +199,32 @@
                 strResult = PutStringIntoString(_config.MailFromAppName);
                 sb.Append($"_config.MailFromAppName: {strResult} $$$ ");
 
-                //_config.ApiKey
-                strResult = PutStringIntoString(_config.ApiKey);
-                sb.Append($"_config.ApiKey: {strResult} $$$ ");
+                //_config.ToAddresses
+                strResult = PutListIntoString(_config.ToAddresses);
+                sb.Append($"_config.ToAddresses: {strResult} $$$ ");
+
+                //_config.Address
+                strResult = PutStringIntoString(_config.Address);
+                sb.Append($"_config.Address: {strResult} $$$ ");
+
+                //_config.Port
+                strResult = PutStringIntoString(_config.Port.ToString());
+                sb.Append($"_config.Port: {strResult} $$$ ");
+
+                // _config.EnableSSL
+                sb.Append($"_config.EnableSSL={_config.EnableSSL.ToString()} $$$ ");
+
+                //_config.Username
+                strResult = PutStringIntoString(_config.Username);
+                sb.Append($"_config.Username: {strResult} $$$ ");
+
+                //_config.Password
+                strResult = PutStringIntoString(_config.Password);
+                sb.Append($"_config.Password: {strResult} $$$ ");
+
+                //_config.Address
+                strResult = PutStringIntoString(_config.Address);
+                sb.Append($"_config.Address: {strResult} $$$ ");
             }
 
             string strOutput = sb.ToString();

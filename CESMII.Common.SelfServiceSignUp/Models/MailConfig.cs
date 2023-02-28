@@ -21,7 +21,7 @@
 
         public int Port { get; set; }
 
-        public bool EnableSsl { get; set; }
+        public bool EnableSSL { get; set; }
 
         public string? Username { get; set; }
 
