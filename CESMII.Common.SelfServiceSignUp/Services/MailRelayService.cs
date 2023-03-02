@@ -1,22 +1,16 @@
 ﻿namespace CESMII.Common.SelfServiceSignUp.Services
 {
-    using System;
-    using System.Net;
-    using System.Net.Mail;
-
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
-
+    using CESMII.Common;
+    using CESMII.Common.SelfServiceSignUp.Models;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
     using SendGrid;
     using SendGrid.Helpers.Mail;
-
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Configuration;
-
-    using CESMII.Common.SelfServiceSignUp.Models;
-    using CESMII.Common;
-    using Microsoft.AspNetCore.Components.Web;
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Mail;
     using System.Text;
+    using System.Threading.Tasks;
 
 #pragma warning disable 8601, 8602, 8604  // Suppress warnings that items might have a null value.
     public class MailRelayService
@@ -43,7 +37,6 @@
         public async Task<bool> SendEmailSendGrid(MailMessage message, string strCaller = "")
         {
             _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@150 called (caller = {strCaller})");
-            DumpConfigState($"{strCaller}@46: ");
 
             bool bSuccess = false;
             try
@@ -76,7 +69,6 @@
                 _logger.LogError($"{strCaller}MailRelayService: Exception -- {ex.Message}");
             }
 
-            DumpConfigState($"{strCaller}@79: ");
             return bSuccess;
         }
 
@@ -89,7 +81,6 @@
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo, string strCaller = "")
         {
             _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@192 called (caller = {strCaller})");
-            DumpConfigState($"{strCaller}@92: ");
 
             bool bSuccess = false;
 
@@ -107,16 +98,16 @@
                 }
             }
 
-            if (string.IsNullOrEmpty(_config.MailFromAddress))
+            if (string.IsNullOrEmpty(_config.FromAddress))
             {
-                _config.MailFromAddress = "paul.yao@c-labs.com";
-                _logger.LogError($"{strCaller}SendEmailSendGrid: _config.MailFromAddress was null or empty. Setting to Secret Santa default.");
+                _logger.LogError($"{strCaller}SendEmailSendGrid: _config.FromAddress was null or empty. Required value.");
+                return false;
             }
 
             if (string.IsNullOrEmpty(_config.MailFromAppName))
             {
-                _config.MailFromAppName = "Profile Designer (Staging)";
-                _logger.LogError($"{strCaller}SendEmailSendGrid: _config.MailFromAppName was null or empty. Setting to Secret Santa default.");
+                _config.MailFromAppName = "CESMII";
+                _logger.LogError($"{strCaller}SendEmailSendGrid: _config.MailFromAppName was null or empty. Setting to CESMII.");
             }
 
             string strApiKey = _config.ApiKey;
@@ -125,7 +116,7 @@
                 _logger.LogError($"{strCaller}SendEmailSendGrid: _config.ApiKey was null or empty. Not sending.");
                 return false;
             }
-            var eaFrom = new EmailAddress(_config.MailFromAddress, _config.MailFromAppName);
+            var eaFrom = new EmailAddress(_config.FromAddress, _config.MailFromAppName);
 
             if (_config.ToAddresses == null || _config.ToAddresses.Count == 0)
             {
@@ -158,7 +149,7 @@
                 }
             }
 
-            DumpConfigState($"{strCaller}@161: ");
+            //DumpConfigState($"{strCaller}@161: ");
 
             return bSuccess;
         }
@@ -191,9 +182,9 @@
                 strResult = PutStringIntoString(_config.BaseUrl);
                 sb.Append($"_config.BaseUrl: {strResult} $$$ ");
 
-                //_config.MailFromAddress
-                strResult = PutStringIntoString(_config.MailFromAddress);
-                sb.Append($"_config.MailFromAddress: {strResult} $$$ ");
+                //_config.FromAddress
+                strResult = PutStringIntoString(_config.FromAddress);
+                sb.Append($"_config.FromAddress: {strResult} $$$ ");
 
                 //_config.MailFromAppName
                 strResult = PutStringIntoString(_config.MailFromAppName);
@@ -319,7 +310,7 @@
 
 //    _logger.LogDebug($"Email configuration | Server: {_config.Address} Port: {_config.Port} SSL: {_config.EnableSsl}");
 
-//    message.From = new MailAddress(_config.MailFromAddress, "SM Marketplace");
+//    message.From = new MailAddress(_config.FromAddress, "SM Marketplace");
 
 //    // If Mail Relay is in debug mode set all addresses to the configuration file.
 //    if (_config.Debug)
