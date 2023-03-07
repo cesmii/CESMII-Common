@@ -45,7 +45,7 @@ namespace CESMII.Common.CloudLibClient
 
             var uaNodeSet = result?.Nodes?.FirstOrDefault();
             var uaNamespace = uaNodeSet?.Metadata;
-            if (uaNodeSet != null)
+            if (uaNamespace != null && uaNodeSet != null)
             {
                 uaNamespace.Nodeset = uaNodeSet;
                 uaNamespace.Nodeset.Metadata = null;// break the cycle before returning the uaNamespace
