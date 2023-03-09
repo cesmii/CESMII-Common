@@ -2,12 +2,12 @@
 {
     using CESMII.Common.SelfServiceSignUp.Models;
     using CESMII.Common.SelfServiceSignUp.Services;
+    using CESMII.ProfileDesigner.DAL;
+    using CESMII.ProfileDesigner.DAL.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
     using System.Net;
     using System.Net.Mail;
-    using System.Text;
     using System.Threading.Tasks;
 
 #pragma warning disable 8600, 8602     // Ignore worries about null values.
@@ -40,24 +40,26 @@
     public class SelfServiceSignUpNotifyController : ControllerBase
     {
         private readonly MailRelayService _mailService;
+        private readonly UserDAL _dalUser;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
 
         public SelfServiceSignUpNotifyController(
             ILogger<SelfServiceSignUpNotifyController> logger,
-            MailRelayService mailservice)
+            MailRelayService mailservice, 
+            UserDAL dal)
         {
             this._logger = logger;
             this._mailService = mailservice;
+            this._dalUser = dal;
         }
 
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        // public async Task<IActionResult> Submit(SubmitInputModel input)  // Azure AD seems to like this - probably with [FromBody]
-        // public async Task<IActionResult> Submit(string strInput)         // We like this, but Azure doesn't like this. :-(
+        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD seems to like this
+        // public async Task<IActionResult> Submit(string strInput)                    // We like this, but Azure doesn't like this. :-(
         public async Task<IActionResult> Submit()
         {
-
             // To avoid weirdly long names for custom user attributes, we
             // read these values in ourselves then smartly parse them.
             string strInput = String.Empty;
@@ -110,8 +112,36 @@
             catch (Exception ex)
             {
                 string strError = ex.Message.ToString();
-                _logger.LogError(strError);
+                _logger.LogError($"API Connector exception: {strError}");
+                return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
+
+            bool bIsCesmiiMember = false;
+            if (simInputValues.CESMIIMember != null)
+            {
+                bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
+            }
+
+            // Add user to public.user database
+            // Note: This is the first half of collecting user information.
+            //       The other half occurs in the InitLocalUser function, which is found
+            //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
+            UserModel um = new UserModel()
+            {
+                DisplayName = simInputValues.displayName,
+                Email = simInputValues.email,
+                SelfServiceSignUp_Organization_Name = simInputValues.Organization,
+                SelfServiceSignUp_IsCesmiiMember = bIsCesmiiMember,
+            };
+
+            if (!string.IsNullOrEmpty(simInputValues.givenName))
+                um.FirstName = simInputValues.givenName;
+
+            if (!string.IsNullOrEmpty(simInputValues.surName))
+                um.LastName = simInputValues.surName;
+
+            // Add record to database.
+            var id = await _dalUser.AddAsync(um, new UserToken());
 
             // Send email that we have created a new user account
             string strUserName = simInputValues.displayName;
