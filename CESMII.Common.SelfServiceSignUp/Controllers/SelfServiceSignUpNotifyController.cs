@@ -1,4 +1,5 @@
-﻿namespace CESMII.Common.SelfServiceSignUp
+﻿#define LOCALTEST
+namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
     using CESMII.Common.SelfServiceSignUp.Services;
@@ -10,6 +11,7 @@
     using System.Net;
     using System.Net.Mail;
     using System.Threading.Tasks;
+
 
 #pragma warning disable 8600, 8602     // Ignore worries about null values.
 
@@ -54,21 +56,36 @@
             this._dalUser = dal;
         }
 
+        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
+
+
+        // When running in LOCALTEST mode:
+        // -- We remove the authentication ([SelfSignUpAuth]), since that's a headache to set up and deal with.
+        // -- Test parameters are passed in through a simple string that has some hand-coded JSON.
+        // When running in PRODUCTION mode:
+        // -- Enable authentication
+        // -- No input parameters, since we'll pluck that from the header using runtime magic.
+
+#if LOCALTEST
+        [HttpPost]
+        [ActionName("submit")]
+
+        public async Task<IActionResult> Submit(string strInput)            // We for local testing
+        {
+#else
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
-        // public async Task<IActionResult> Submit(string strInput)                    // We prefer this for local testing
-        public async Task<IActionResult> Submit()                                      // Use this in production, and we read and handler header details ourselves.
+        public async Task<IActionResult> Submit()                           // Use for production.
         {
-            // To avoid weirdly long names for custom user attributes, we
+            // To avoid weirdly long names for custom user attributes,
             // read these values in ourselves then smartly parse them.
             string strInput = String.Empty;
             using (var reader = new StreamReader(Request.Body))
             {
                 strInput = await reader.ReadToEndAsync();
             }
-
+#endif
             if (string.IsNullOrEmpty(strInput))
             {
                 string strError = "Cannot read claims from header.";
