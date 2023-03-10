@@ -158,11 +158,16 @@ namespace CESMII.Common.SelfServiceSignUp
             if (!string.IsNullOrEmpty(simInputValues.surName))
                 um.LastName = simInputValues.surName;
 
-            // Add record to database.
-            var id = await _dalUser.AddAsync(um, new UserToken());
+            // Search whether we already signed up this user.
+            var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
+            bool bFirstTime = (listMatchEmailAddress.Count == 0);
+            if (bFirstTime)
+            {
+                // Add record to database if not previously added.
+                var id = await _dalUser.AddAsync(um, new UserToken());
+            }
 
-            //await SendEmailSignUpNotification(simInputValues);
-            await EmailSelfServiceSignUpNotification(this, simInputValues, um);
+            await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
 
             _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
 
@@ -179,12 +184,14 @@ namespace CESMII.Common.SelfServiceSignUp
         /// <param name="sim"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserModel user)
+        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserModel user, bool bFirstTime)
         {
             // Send email to notify recipient that we have received the cancel publish request
             try
             {
                 var strSubject = SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
+                if (!bFirstTime)
+                    strSubject = SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up -- Repeat Customer");
                 var emailInfo = new EmailDataModel(user, strSubject);
 
                 // Note: This email template resides in the folders of the CESMII.ProfileDesigner.Api project.
