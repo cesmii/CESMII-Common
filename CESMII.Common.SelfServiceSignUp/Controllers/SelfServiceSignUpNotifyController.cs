@@ -1,4 +1,4 @@
-﻿#define LOCALTEST
+﻿// #define LOCALTEST
 namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
