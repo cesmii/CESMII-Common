@@ -6,6 +6,7 @@
     using CESMII.ProfileDesigner.DAL.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+    using SendGrid.Helpers.Mail;
     using System.Net;
     using System.Net.Mail;
     using System.Threading.Tasks;
@@ -37,7 +38,7 @@
     /// </summary>
     [ApiController]
     [Route("api/SelfServiceSignUp/[action]")]
-    public class SelfServiceSignUpNotifyController : ControllerBase
+    public class SelfServiceSignUpNotifyController : Controller
     {
         private readonly MailRelayService _mailService;
         private readonly UserDAL _dalUser;
@@ -56,9 +57,9 @@
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD seems to like this
-        // public async Task<IActionResult> Submit(string strInput)                    // We like this, but Azure doesn't like this. :-(
-        public async Task<IActionResult> Submit()
+        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
+        // public async Task<IActionResult> Submit(string strInput)                    // We prefer this for local testing
+        public async Task<IActionResult> Submit()                                      // Use this in production, and we read and handler header details ourselves.
         {
             // To avoid weirdly long names for custom user attributes, we
             // read these values in ourselves then smartly parse them.
@@ -143,38 +144,68 @@
             // Add record to database.
             var id = await _dalUser.AddAsync(um, new UserToken());
 
-            // Send email that we have created a new user account
-            string strUserName = simInputValues.displayName;
-            string strUserOrganization =  simInputValues.Organization;
-            string strOrgCesmiiMember = simInputValues.CESMIIMember;
-            string strUserEmail = simInputValues.email;
-
-
-            string strSubject = "CESMII Sign-Up -- A new user has signed up";
-            string strContent = $"<p>A new user has signed themselves up as a CESMII.org user.</p>" +
-                                $"<p></p>" +
-                                $"<p>User Name: <strong>{strUserName}</strong> ({strUserEmail})</p>" +
-                                $"<p>Organization: <strong>{strUserOrganization}</strong></p>" +
-                                $"<p>CESMII Member? <strong>{strOrgCesmiiMember}</strong></p>" +
-                                $"<p></p>" +
-                                $"<p>Sincerely,</p>" +
-                                $"<p>The Automated Self-Service Sign-Up System</p>" +
-                                $"<p></p>";
-
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: About to send notification email.");
-
-            MailMessage mm = new MailMessage()
-                            {
-                                Subject = strSubject,
-                                Body = strContent
-                            };
-
-            await _mailService.SendEmailSendGrid(mm, "Sssu");
+            //await SendEmailSignUpNotification(simInputValues);
+            await EmailSelfServiceSignUpNotification(this, simInputValues, um);
 
             _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
 
             // Let's go ahead and create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
+        }
+
+        protected const string SIGNUP_SUBJECT = "CESMII | Profile Designer | {{Type}}";
+
+        /// <summary>
+        /// EmailSelfServiceSignUpNotification - Self-Service Sign-Up notify via email that we have a new user.
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="sim"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserModel user)
+        {
+            // Send email to notify recipient that we have received the cancel publish request
+            try
+            {
+                var strSubject = SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
+                var emailInfo = new EmailDataModel(user, strSubject);
+
+                // Note: This email template resides in the folders of the CESMII.ProfileDesigner.Api project.
+                //       While MVC supports adding new folders in the search for views, the simpler and easier
+                //       approach is to put all of these views in the same location. (Your mileage may vary.)
+                string strViewName = "~/Views/Template/EmailSignUpNotification.cshtml";
+                string strBody = await controller.RenderViewAsync(strViewName, sim);
+                if (strBody.Contains("ERROR"))
+                    throw new Exception("Unable to load email template. Check that files are in the CESMII.ProfileDesigner.Api project folder");
+
+                await SendEmail(emailInfo, strBody);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"SelfServiceSignUp -- Notification email for new user {sim.displayName} [{sim.email}] not sent. Message={ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// SendEmail -- Package and deliver to SendGrid service
+        /// </summary>
+        private async Task SendEmail(EmailDataModel emailInfo, string body)
+        {
+            // Setup "To" list 
+            // List of recipients for the notification email.
+            List<EmailAddress> leaTo = new List<EmailAddress>
+            {
+                new EmailAddress(emailInfo.SenderEmail, emailInfo.SenderDisplayName)
+            };
+
+            // Setup Contents of our email message.
+            MailMessage mm = new MailMessage()
+            {
+                Subject = emailInfo.Subject,
+                Body = body
+            };
+
+            await _mailService.SendEmailSendGrid(mm, leaTo);
         }
 
     }
