@@ -28,55 +28,56 @@
 
 
 #pragma warning disable 8600
+        ///// <summary>
+        ///// SendEmailSendGrid - Called from Self-Service Sign-Up - But not used now. Hmm
+        ///// </summary>
+        ///// <param name="message">The packaged up message we want to send.</param>
+        ///// <param name="strCaller">String with name of the caller (debug helper - added to log)</param>
+        ///// <returns></returns>
+        //public async Task<bool> SendEmailSendGrid(MailMessage message, string strCaller = "")
+        //{
+        //    _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@150 called (caller = {strCaller})");
+
+        //    bool bSuccess = false;
+        //    try
+        //    {
+        //        var leaTo = new List<EmailAddress>();
+        //        // If Mail Relay is in debug mode set all addresses to the configuration file.
+        //        if (_config.Debug)
+        //        {
+        //            _logger.LogInformation($"{strCaller}Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
+        //            foreach (var address in _config.DebugToAddresses)
+        //            {
+        //                leaTo.Add(new EmailAddress(address));
+        //                _logger.LogInformation($"{strCaller}Adding Email To: {address}");
+        //            }
+        //        }
+        //        else
+        //        {
+        //            foreach (var address in _config.ToAddresses)
+        //            {
+        //                leaTo.Add(new EmailAddress(address));
+        //                _logger.LogInformation($"{strCaller}Adding Email To: {address}");
+        //            }
+        //        }
+
+        //        await SendEmailSendGrid(message, leaTo, strCaller);
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"{strCaller}MailRelayService: Exception -- {ex.Message}");
+        //    }
+
+        //    return bSuccess;
+        //}
 
         /// <summary>
-        /// SendEmailSendGrid - from SSSU
+        /// SendEmailSendGrid - Send mail to SendGrid
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        public async Task<bool> SendEmailSendGrid(MailMessage message, string strCaller = "")
-        {
-            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@150 called (caller = {strCaller})");
-
-            bool bSuccess = false;
-            try
-            {
-                var leaTo = new List<EmailAddress>();
-                // If Mail Relay is in debug mode set all addresses to the configuration file.
-                if (_config.Debug)
-                {
-                    _logger.LogInformation($"{strCaller}Mail relay is in debug mode. Redirecting target email to: {string.Join("|", _config.DebugToAddresses)}");
-                    foreach (var address in _config.DebugToAddresses)
-                    {
-                        leaTo.Add(new EmailAddress(address));
-                        _logger.LogInformation($"{strCaller}Adding Email To: {address}");
-                    }
-                }
-                else
-                {
-                    foreach (var address in _config.ToAddresses)
-                    {
-                        leaTo.Add(new EmailAddress(address));
-                        _logger.LogInformation($"{strCaller}Adding Email To: {address}");
-                    }
-                }
-
-                await SendEmailSendGrid(message, leaTo, strCaller);
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{strCaller}MailRelayService: Exception -- {ex.Message}");
-            }
-
-            return bSuccess;
-        }
-
-        /// <summary>
-        /// SendEmailSendGrid - From publish
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="leaTo"></param>
+        /// <param name="message">Packaged up email message to send.</param>
+        /// <param name="leaTo">List of recipients for this email.</param>
+        /// <param name="strCaller">String with name of function that called us (debug helper - is written to log)</param>
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo, string strCaller = "")
         {
@@ -134,6 +135,11 @@
             }
 
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
+
+            if (!string.IsNullOrEmpty(_config.BccAddress))
+            {
+                msg.AddBcc(_config.BccAddress);
+            }
 
             var response = await client.SendEmailAsync(msg);
             if (response == null)

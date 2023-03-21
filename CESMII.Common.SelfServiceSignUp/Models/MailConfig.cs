@@ -15,6 +15,8 @@
 
         public string? FromAddress { get; set; }
 
+        public string? BccAddress { get; set; }
+
         public string? MailFromAppName { get; set; }
 
         public string? Address { get; set; }
