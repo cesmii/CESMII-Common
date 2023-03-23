@@ -348,3 +348,4 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/CESMII.Common.SelfServiceSignUp/Properties/launchSettings.json

@@ -81,7 +81,7 @@
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo, string strCaller = "")
         {
-            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@192 called (caller = {strCaller})");
+            _logger.LogInformation($"{strCaller}MailRelayService: SendEmailSendGrid@192 called (caller = {strCaller})");
 
             bool bSuccess = false;
 
@@ -94,7 +94,7 @@
                 int i = 0;
                 foreach (var address in leaTo)
                 {
-                    _logger.LogError($"{strCaller}SendEmailSendGrid - leaTo[{i}] = {address.Email} ");
+                    _logger.LogInformation($"{strCaller}SendEmailSendGrid - leaTo[{i}] = {address.Email} ");
                     i++;
                 }
             }
@@ -108,7 +108,7 @@
             if (string.IsNullOrEmpty(_config.MailFromAppName))
             {
                 _config.MailFromAppName = "CESMII";
-                _logger.LogError($"{strCaller}SendEmailSendGrid: _config.MailFromAppName was null or empty. Setting to CESMII.");
+                _logger.LogInformation($"{strCaller}SendEmailSendGrid: _config.MailFromAppName was null or empty. Setting to CESMII.");
             }
 
             string strApiKey = _config.ApiKey;
@@ -131,7 +131,7 @@
             var subject = message.Subject;
             if (string.IsNullOrEmpty(subject))
             {
-                _logger.LogError($"{strCaller}SendEmailSendGrid: subject was null or empty.");
+                _logger.LogInformation($"{strCaller}SendEmailSendGrid: subject was null or empty.");
             }
 
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);

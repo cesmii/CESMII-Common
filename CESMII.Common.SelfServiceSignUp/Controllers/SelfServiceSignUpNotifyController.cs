@@ -70,6 +70,8 @@ namespace CESMII.Common.SelfServiceSignUp
         [HttpPost]
         [ActionName("submit")]
 
+        // To test -- in line 1, uncomment definition for LOCALTEST, then paste the following JSON into Swagger:
+        // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
         public async Task<IActionResult> Submit(string strInput)            // We for local testing
         {
 #else
