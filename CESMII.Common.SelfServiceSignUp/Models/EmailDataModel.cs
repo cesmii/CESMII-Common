@@ -1,6 +1,8 @@
-﻿namespace CESMII.Common.SelfServiceSignUp
+﻿using CESMII.Common.SelfServiceSignUp.Models;
+
+namespace CESMII.Common.SelfServiceSignUp
 {
-    using CESMII.ProfileDesigner.DAL.Models;
+    ////////using CESMII.ProfileDesigner.DAL.Models;
 
     public class EmailDataModel
     {
@@ -8,7 +10,7 @@
         private readonly string _senderDisplayName;
         private readonly string _subject;
 
-        public EmailDataModel(UserModel user, string subject)
+        public EmailDataModel(Sssu_User_Model user, string subject)
         {
             _senderEmail = user.Email;
             _senderDisplayName = user.DisplayName;

@@ -3,8 +3,8 @@ namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
     using CESMII.Common.SelfServiceSignUp.Services;
-    using CESMII.ProfileDesigner.DAL;
-    using CESMII.ProfileDesigner.DAL.Models;
+    ////////using CESMII.ProfileDesigner.DAL;
+    ////////using CESMII.ProfileDesigner.DAL.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using SendGrid.Helpers.Mail;
@@ -43,17 +43,19 @@ namespace CESMII.Common.SelfServiceSignUp
     public class SelfServiceSignUpNotifyController : Controller
     {
         private readonly MailRelayService _mailService;
-        private readonly UserDAL _dalUser;
+        ////////private readonly UserDAL _dalUser;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
 
         public SelfServiceSignUpNotifyController(
             ILogger<SelfServiceSignUpNotifyController> logger,
-            MailRelayService mailservice, 
-            UserDAL dal)
+            MailRelayService mailservice
+            ////////, 
+            ////////UserDAL dal
+            )
         {
             this._logger = logger;
             this._mailService = mailservice;
-            this._dalUser = dal;
+            ////////this._dalUser = dal;
         }
 
         // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
@@ -146,12 +148,12 @@ namespace CESMII.Common.SelfServiceSignUp
             // Note: This is the first half of collecting user information.
             //       The other half occurs in the InitLocalUser function, which is found
             //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
-            UserModel um = new UserModel()
+            Sssu_User_Model um = new Sssu_User_Model()
             {
                 DisplayName = simInputValues.displayName,
                 Email = simInputValues.email,
-                SelfServiceSignUp_Organization_Name = simInputValues.Organization,
-                SelfServiceSignUp_IsCesmiiMember = bIsCesmiiMember,
+                Organization_Name = simInputValues.Organization,
+                IsCesmiiMember = bIsCesmiiMember,
             };
 
             if (!string.IsNullOrEmpty(simInputValues.givenName))
@@ -160,15 +162,16 @@ namespace CESMII.Common.SelfServiceSignUp
             if (!string.IsNullOrEmpty(simInputValues.surName))
                 um.LastName = simInputValues.surName;
 
-            // Search whether we already signed up this user.
-            var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
-            bool bFirstTime = (listMatchEmailAddress.Count == 0);
-            if (bFirstTime)
-            {
-                // Add record to database if not previously added.
-                var id = await _dalUser.AddAsync(um, new UserToken());
-            }
+            ////////// Search whether we already signed up this user.
+            ////////var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
+            ////////bool bFirstTime = (listMatchEmailAddress.Count == 0);
+            ////////if (bFirstTime)
+            ////////{
+            ////////    // Add record to database if not previously added.
+            ////////    var id = await _dalUser.AddAsync(um, new UserToken());
+            ////////}
 
+            bool bFirstTime = true;
             await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
 
             _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
@@ -186,7 +189,7 @@ namespace CESMII.Common.SelfServiceSignUp
         /// <param name="sim"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserModel user, bool bFirstTime)
+        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, Sssu_User_Model user, bool bFirstTime)
         {
             // Send email to notify recipient that we have received the cancel publish request
             try
