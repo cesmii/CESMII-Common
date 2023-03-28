@@ -1,4 +1,4 @@
-﻿// #define LOCALTEST
+﻿#define LOCALTEST
 namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
@@ -8,6 +8,7 @@ namespace CESMII.Common.SelfServiceSignUp
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using SendGrid.Helpers.Mail;
+    using System.Collections;
     using System.Net;
     using System.Net.Mail;
     using System.Threading.Tasks;
@@ -74,13 +75,13 @@ namespace CESMII.Common.SelfServiceSignUp
 
         // To test -- in line 1, uncomment definition for LOCALTEST, then paste the following JSON into Swagger:
         // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
-        public async Task<IActionResult> Submit(string strInput)            // We for local testing
+        public async Task<IActionResult> SubmitProfileDesigner(string strInput)            // We for local testing
         {
 #else
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
-        public async Task<IActionResult> Submit()                           // Use for production.
+        public async Task<IActionResult> SubmitProfileDesigner()                           // Use for production.
         {
             // To avoid weirdly long names for custom user attributes,
             // read these values in ourselves then smartly parse them.
@@ -96,6 +97,7 @@ namespace CESMII.Common.SelfServiceSignUp
                 _logger.LogError(strError);
                 return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
+
 
             // We get Json - send it to be parsed in the SubmitInputModel constructor
             SubmitInputModel simInputValues = null;
@@ -197,6 +199,154 @@ namespace CESMII.Common.SelfServiceSignUp
                 var strSubject = SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
                 if (!bFirstTime)
                     strSubject = SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up -- Repeat Customer");
+                var emailInfo = new EmailDataModel(user, strSubject);
+
+                // Note: This email template resides in the folders of the CESMII.ProfileDesigner.Api project.
+                //       While MVC supports adding new folders in the search for views, the simpler and easier
+                //       approach is to put all of these views in the same location. (Your mileage may vary.)
+                string strViewName = "~/Views/Template/EmailSignUpNotification.cshtml";
+                string strBody = await controller.RenderViewAsync(strViewName, sim);
+                if (strBody.Contains("ERROR"))
+                    throw new Exception("Unable to load email template. Check that files are in the CESMII.ProfileDesigner.Api project folder");
+
+                await SendEmail(emailInfo, strBody);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"SelfServiceSignUp -- Notification email for new user {sim.displayName} [{sim.email}] not sent. Message={ex.Message}");
+            }
+        }
+
+#if LOCALTEST
+        [HttpPost]
+        [ActionName("submitmarketplace")]
+
+        // To test -- in line 1, uncomment definition for LOCALTEST, then paste the following JSON into Swagger:
+        // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
+        public async Task<IActionResult> SubmitMarketplace(string strInput)            // We for local testing
+        {
+#else
+        [HttpPost]
+        [SelfSignUpAuth]
+        [ActionName("submitmarketplace")]
+        public async Task<IActionResult> SubmitMarketplace()                           // Use for production.
+        {
+            // To avoid weirdly long names for custom user attributes,
+            // read these values in ourselves then smartly parse them.
+            string strInput = String.Empty;
+            using (var reader = new StreamReader(Request.Body))
+            {
+                strInput = await reader.ReadToEndAsync();
+            }
+#endif
+            if (string.IsNullOrEmpty(strInput))
+            {
+                string strError = "Cannot read claims from header.";
+                _logger.LogError(strError);
+                return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+            }
+
+
+            // We get Json - send it to be parsed in the SubmitInputModel constructor
+            SubmitInputModel simInputValues = null;
+            try
+            {
+                simInputValues = new SubmitInputModel(strInput);
+
+                if (simInputValues == null)
+                {
+                    string strError = "Can not deserialize simInputValues claims.";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+
+                if (string.IsNullOrEmpty(simInputValues.email))
+                {
+                    string strError = "The value entered for Email is invalid";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("EmailEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+
+                if (string.IsNullOrEmpty(simInputValues.displayName))
+                {
+                    string strError = "The value entered for Display Name is invalid";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("DisplayNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+
+                if (string.IsNullOrEmpty(simInputValues.Organization))
+                {
+                    string strError = "The value entered for Organization is invalid";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("OrganizationNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+            }
+            catch (Exception ex)
+            {
+                string strError = ex.Message.ToString();
+                _logger.LogError($"API Connector exception: {strError}");
+                return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+            }
+
+            bool bIsCesmiiMember = false;
+            if (simInputValues.CESMIIMember != null)
+            {
+                bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
+            }
+
+            // Add user to public.user database
+            // Note: This is the first half of collecting user information.
+            //       The other half occurs in the InitLocalUser function, which is found
+            //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
+            Sssu_User_Model um = new Sssu_User_Model()
+            {
+                DisplayName = simInputValues.displayName,
+                Email = simInputValues.email,
+                Organization_Name = simInputValues.Organization,
+                IsCesmiiMember = bIsCesmiiMember,
+            };
+
+            if (!string.IsNullOrEmpty(simInputValues.givenName))
+                um.FirstName = simInputValues.givenName;
+
+            if (!string.IsNullOrEmpty(simInputValues.surName))
+                um.LastName = simInputValues.surName;
+
+            ////////// Search whether we already signed up this user.
+            ////////var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
+            ////////bool bFirstTime = (listMatchEmailAddress.Count == 0);
+            ////////if (bFirstTime)
+            ////////{
+            ////////    // Add record to database if not previously added.
+            ////////    var id = await _dalUser.AddAsync(um, new UserToken());
+            ////////}
+
+            bool bFirstTime = true;
+            await Sssu_EmailMarketplace(this, simInputValues, um, bFirstTime);
+
+            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
+
+            // Let's go ahead and create an account for these nice people.
+            return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
+        }
+
+        protected const string MARKETPLACE_SIGNUP_SUBJECT = "CESMII | Marketplace | {{Type}}";
+
+        /// <summary>
+        /// Sssu_EmailMarketplace - Self-Service Sign-Up notify via email that we have a new user.
+        /// </summary>
+        /// <param name="controller"></param>
+        /// <param name="sim"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        private async Task Sssu_EmailMarketplace(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, Sssu_User_Model user, bool bFirstTime)
+        {
+            // Send email to notify recipient that we have received the cancel publish request
+            try
+            {
+                var strSubject = MARKETPLACE_SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
+                if (!bFirstTime)
+                    strSubject = MARKETPLACE_SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up -- Repeat Customer");
                 var emailInfo = new EmailDataModel(user, strSubject);
 
                 // Note: This email template resides in the folders of the CESMII.ProfileDesigner.Api project.
