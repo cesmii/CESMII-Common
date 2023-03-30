@@ -37,7 +37,7 @@
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, string strCaller = "")
         {
-            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@150 called (caller = {strCaller})");
+            _logger.LogError($"{strCaller}MailRelayService: SendEmailSendGrid@40 called (caller = {strCaller})");
 
             bool bSuccess = false;
             try
@@ -67,7 +67,7 @@
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{strCaller}MailRelayService: Exception -- {ex.Message}");
+                _logger.LogError($"{strCaller}MailRelayService.SendEmailSendGrid: Exception -- {ex.Message}");
             }
 
             return bSuccess;
@@ -82,7 +82,7 @@
         /// <returns></returns>
         public async Task<bool> SendEmailSendGrid(MailMessage message, List<EmailAddress> leaTo, string strCaller = "")
         {
-            _logger.LogInformation($"{strCaller}MailRelayService: SendEmailSendGrid@192 called (caller = {strCaller})");
+            _logger.LogInformation($"{strCaller}MailRelayService.SendEmailSendGrid@85: Entering called (caller = {strCaller})");
 
             bool bSuccess = false;
 
@@ -135,6 +135,7 @@
                 _logger.LogInformation($"{strCaller}SendEmailSendGrid: subject was null or empty.");
             }
 
+            _logger.LogInformation($"{strCaller}MailRelayService.SendEmailSendGrid@85: Calling CreateSingleEmailToMultipleRecipients()");
             var msg = MailHelper.CreateSingleEmailToMultipleRecipients(eaFrom, leaTo, subject, null, message.Body);
 
             if (!string.IsNullOrEmpty(_config.BccAddress))

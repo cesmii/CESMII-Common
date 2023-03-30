@@ -1,4 +1,4 @@
-﻿#define LOCALTEST
+﻿//#define LOCALTEST
 namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
@@ -7,6 +7,7 @@ namespace CESMII.Common.SelfServiceSignUp
     ////////using CESMII.ProfileDesigner.DAL.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
+    using NLog;
     using SendGrid.Helpers.Mail;
     using System.Collections;
     using System.Net;
@@ -46,6 +47,7 @@ namespace CESMII.Common.SelfServiceSignUp
         private readonly MailRelayService _mailService;
         ////////private readonly UserDAL _dalUser;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
+        protected readonly NLog.Logger _mongologger;
 
         public SelfServiceSignUpNotifyController(
             ILogger<SelfServiceSignUpNotifyController> logger,
@@ -54,8 +56,16 @@ namespace CESMII.Common.SelfServiceSignUp
             ////////UserDAL dal
             )
         {
+
             this._logger = logger;
+            _mongologger = NLog.LogManager.GetCurrentClassLogger();
             this._mailService = mailservice;
+            _logger.LogError("SelfServiceSignUpNotifyController - Error");
+            _logger.LogInformation("SelfServiceSignUpNotifyController - Information");
+            _logger.LogWarning("SelfServiceSignUpNotifyController - Warning");
+            _logger.LogCritical("SelfServiceSignUpNotifyController - Critical");
+
+            _mongologger.Info("SelfServiceSignUpNotifyController Constructor: Entering");
             ////////this._dalUser = dal;
         }
 
@@ -91,6 +101,8 @@ namespace CESMII.Common.SelfServiceSignUp
                 strInput = await reader.ReadToEndAsync();
             }
 #endif
+            _mongologger.Info("Entering SubmitProfileDesigner");
+            _mongologger.Error("Error - in function SubmitProfileDesigner");
             if (string.IsNullOrEmpty(strInput))
             {
                 string strError = "Cannot read claims from header.";
@@ -239,6 +251,8 @@ namespace CESMII.Common.SelfServiceSignUp
                 strInput = await reader.ReadToEndAsync();
             }
 #endif
+            _mongologger.Info("SubmitMarketplace(): Entering");
+
             if (string.IsNullOrEmpty(strInput))
             {
                 string strError = "Cannot read claims from header.";
@@ -248,6 +262,7 @@ namespace CESMII.Common.SelfServiceSignUp
 
 
             // We get Json - send it to be parsed in the SubmitInputModel constructor
+            _mongologger.Info("SubmitMarketplace(): About to parse JSON");
             SubmitInputModel simInputValues = null;
             try
             {
@@ -298,6 +313,7 @@ namespace CESMII.Common.SelfServiceSignUp
             // Note: This is the first half of collecting user information.
             //       The other half occurs in the InitLocalUser function, which is found
             //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
+            _mongologger.Info("SubmitMarketplace(): About to create Sssu_User_Model");
             Sssu_User_Model um = new Sssu_User_Model()
             {
                 DisplayName = simInputValues.displayName,
@@ -321,6 +337,7 @@ namespace CESMII.Common.SelfServiceSignUp
             ////////    var id = await _dalUser.AddAsync(um, new UserToken());
             ////////}
 
+            _mongologger.Info("SubmitMarketplace(): About to call Sssu_EmailMarketplace()");
             bool bFirstTime = true;
             await Sssu_EmailMarketplace(this, simInputValues, um, bFirstTime);
 
@@ -342,6 +359,7 @@ namespace CESMII.Common.SelfServiceSignUp
         private async Task Sssu_EmailMarketplace(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, Sssu_User_Model user, bool bFirstTime)
         {
             // Send email to notify recipient that we have received the cancel publish request
+            _mongologger.Info("Sssu_EmailMarketplace(): Entering");
             try
             {
                 var strSubject = MARKETPLACE_SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
@@ -357,6 +375,7 @@ namespace CESMII.Common.SelfServiceSignUp
                 if (strBody.Contains("ERROR"))
                     throw new Exception("Unable to load email template. Check that files are in the CESMII.ProfileDesigner.Api project folder");
 
+                _mongologger.Info("Sssu_EmailMarketplace(): Sbout to call SendEmail");
                 await SendEmail(emailInfo, strBody);
             }
             catch (Exception ex)
@@ -370,6 +389,8 @@ namespace CESMII.Common.SelfServiceSignUp
         /// </summary>
         private async Task SendEmail(EmailDataModel emailInfo, string body)
         {
+            _mongologger.Info("SendEmail(): Entering");
+
             // Setup "To" list 
             // List of recipients for the notification email.
             List<EmailAddress> leaTo = new List<EmailAddress>
@@ -384,8 +405,8 @@ namespace CESMII.Common.SelfServiceSignUp
                 Body = body
             };
 
-            await _mailService.SendEmailSendGrid(mm, leaTo);
+            _mongologger.Info("SendEmail(): About to call SendEmailSendGrid");
+            await _mailService.SendEmailSendGrid(mm, leaTo,"SssuController");
         }
-
     }
 }
