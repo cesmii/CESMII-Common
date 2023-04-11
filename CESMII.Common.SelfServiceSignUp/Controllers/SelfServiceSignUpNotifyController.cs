@@ -1,10 +1,8 @@
-﻿//#define LOCALTEST
+﻿// #define LOCALTEST
 namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
     using CESMII.Common.SelfServiceSignUp.Services;
-    ////////using CESMII.ProfileDesigner.DAL;
-    ////////using CESMII.ProfileDesigner.DAL.Models;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using NLog;
@@ -45,28 +43,20 @@ namespace CESMII.Common.SelfServiceSignUp
     public class SelfServiceSignUpNotifyController : Controller
     {
         private readonly MailRelayService _mailService;
-        ////////private readonly UserDAL _dalUser;
+        private readonly IUserSignUpData _dalUsersu;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
-        protected readonly NLog.Logger _mongologger;
 
         public SelfServiceSignUpNotifyController(
             ILogger<SelfServiceSignUpNotifyController> logger,
-            MailRelayService mailservice
-            ////////, 
-            ////////UserDAL dal
+            MailRelayService mailservice,
+            IUserSignUpData usersu
             )
         {
+            logger.LogInformation("SelfServiceSignUpNotifyController Constructor: Entering");
 
             this._logger = logger;
-            _mongologger = NLog.LogManager.GetCurrentClassLogger();
             this._mailService = mailservice;
-            _logger.LogError("SelfServiceSignUpNotifyController - Error");
-            _logger.LogInformation("SelfServiceSignUpNotifyController - Information");
-            _logger.LogWarning("SelfServiceSignUpNotifyController - Warning");
-            _logger.LogCritical("SelfServiceSignUpNotifyController - Critical");
-
-            _mongologger.Info("SelfServiceSignUpNotifyController Constructor: Entering");
-            ////////this._dalUser = dal;
+            this._dalUsersu = usersu;
         }
 
         // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
@@ -101,11 +91,10 @@ namespace CESMII.Common.SelfServiceSignUp
                 strInput = await reader.ReadToEndAsync();
             }
 #endif
-            _mongologger.Info("Entering SubmitProfileDesigner");
-            _mongologger.Error("Error - in function SubmitProfileDesigner");
+            _logger.LogInformation("SubmitProfileDesigner(): Entering");
             if (string.IsNullOrEmpty(strInput))
             {
-                string strError = "Cannot read claims from header.";
+                string strError = "SubmitProfileDesigner: Cannot read claims from header.";
                 _logger.LogError(strError);
                 return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
@@ -119,28 +108,28 @@ namespace CESMII.Common.SelfServiceSignUp
 
                 if (simInputValues == null)
                 {
-                    string strError = "Can not deserialize simInputValues claims.";
+                    string strError = "SubmitProfileDesigner: Can not deserialize simInputValues claims.";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.email))
                 {
-                    string strError = "The value entered for Email is invalid";
+                    string strError = "SubmitProfileDesigner: The value entered for Email is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("EmailEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.displayName))
                 {
-                    string strError = "The value entered for Display Name is invalid";
+                    string strError = "SubmitProfileDesigner: The value entered for Display Name is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("DisplayNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.Organization))
                 {
-                    string strError = "The value entered for Organization is invalid";
+                    string strError = "SubmitProfileDesigner: The value entered for Organization is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("OrganizationNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
@@ -148,7 +137,7 @@ namespace CESMII.Common.SelfServiceSignUp
             catch (Exception ex)
             {
                 string strError = ex.Message.ToString();
-                _logger.LogError($"API Connector exception: {strError}");
+                _logger.LogError($"API Connector (SubmitProfileDesigner) exception: {strError}");
                 return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
@@ -158,15 +147,15 @@ namespace CESMII.Common.SelfServiceSignUp
                 bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
             }
 
-            // Add user to public.user database
+            // AddAsync user to public.user database
             // Note: This is the first half of collecting user information.
             //       The other half occurs in the InitLocalUser function, which is found
             //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
-            Sssu_User_Model um = new Sssu_User_Model()
+            UserSignUpModel um = new UserSignUpModel()
             {
                 DisplayName = simInputValues.displayName,
                 Email = simInputValues.email,
-                Organization_Name = simInputValues.Organization,
+                Organization = simInputValues.Organization,
                 IsCesmiiMember = bIsCesmiiMember,
             };
 
@@ -176,19 +165,19 @@ namespace CESMII.Common.SelfServiceSignUp
             if (!string.IsNullOrEmpty(simInputValues.surName))
                 um.LastName = simInputValues.surName;
 
-            ////////// Search whether we already signed up this user.
-            ////////var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
-            ////////bool bFirstTime = (listMatchEmailAddress.Count == 0);
-            ////////if (bFirstTime)
-            ////////{
-            ////////    // Add record to database if not previously added.
-            ////////    var id = await _dalUser.AddAsync(um, new UserToken());
-            ////////}
+            // Search whether we already signed up this user.
+            int count = _dalUsersu.Where(um.Email);
+            bool bFirstTime = (count == 0);
 
-            bool bFirstTime = true;
+            // If user does not exist in database, add it.
+            if (bFirstTime)
+            {
+                _dalUsersu.AddUser(um);
+            }
+
             await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
 
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
+            _logger.LogInformation($"SubmitProfileDesigner: Completed.");
 
             // Let's go ahead and create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
@@ -203,7 +192,7 @@ namespace CESMII.Common.SelfServiceSignUp
         /// <param name="sim"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, Sssu_User_Model user, bool bFirstTime)
+        private async Task EmailSelfServiceSignUpNotification(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserSignUpModel user, bool bFirstTime)
         {
             // Send email to notify recipient that we have received the cancel publish request
             try
@@ -251,7 +240,7 @@ namespace CESMII.Common.SelfServiceSignUp
                 strInput = await reader.ReadToEndAsync();
             }
 #endif
-            _mongologger.Info("SubmitMarketplace(): Entering");
+            _logger.LogInformation("SubmitMarketplace(): Entering");
 
             if (string.IsNullOrEmpty(strInput))
             {
@@ -262,7 +251,7 @@ namespace CESMII.Common.SelfServiceSignUp
 
 
             // We get Json - send it to be parsed in the SubmitInputModel constructor
-            _mongologger.Info("SubmitMarketplace(): About to parse JSON");
+            _logger.LogInformation("SubmitMarketplace(): About to parse JSON");
             SubmitInputModel simInputValues = null;
             try
             {
@@ -270,28 +259,28 @@ namespace CESMII.Common.SelfServiceSignUp
 
                 if (simInputValues == null)
                 {
-                    string strError = "Can not deserialize simInputValues claims.";
+                    string strError = "SubmitMarketplace: Can not deserialize simInputValues claims.";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("ValidationFailed", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.email))
                 {
-                    string strError = "The value entered for Email is invalid";
+                    string strError = "SubmitMarketplace: The value entered for Email is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("EmailEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.displayName))
                 {
-                    string strError = "The value entered for Display Name is invalid";
+                    string strError = "SubmitMarketplace: The value entered for Display Name is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("DisplayNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
                 if (string.IsNullOrEmpty(simInputValues.Organization))
                 {
-                    string strError = "The value entered for Organization is invalid";
+                    string strError = "SubmitMarketplace: The value entered for Organization is invalid";
                     _logger.LogError(strError);
                     return BadRequest(new ResponseContent("OrganizationNameEmpty", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
@@ -299,7 +288,7 @@ namespace CESMII.Common.SelfServiceSignUp
             catch (Exception ex)
             {
                 string strError = ex.Message.ToString();
-                _logger.LogError($"API Connector exception: {strError}");
+                _logger.LogError($"SubmitMarketplace: API Connector exception: {strError}");
                 return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
@@ -309,16 +298,16 @@ namespace CESMII.Common.SelfServiceSignUp
                 bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
             }
 
-            // Add user to public.user database
+            // AddAsync user to public.user database
             // Note: This is the first half of collecting user information.
             //       The other half occurs in the InitLocalUser function, which is found
             //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
-            _mongologger.Info("SubmitMarketplace(): About to create Sssu_User_Model");
-            Sssu_User_Model um = new Sssu_User_Model()
+            _logger.LogInformation("SubmitMarketplace: About to create UserSignUpModel");
+            UserSignUpModel um = new UserSignUpModel()
             {
                 DisplayName = simInputValues.displayName,
                 Email = simInputValues.email,
-                Organization_Name = simInputValues.Organization,
+                Organization = simInputValues.Organization,
                 IsCesmiiMember = bIsCesmiiMember,
             };
 
@@ -328,20 +317,20 @@ namespace CESMII.Common.SelfServiceSignUp
             if (!string.IsNullOrEmpty(simInputValues.surName))
                 um.LastName = simInputValues.surName;
 
-            ////////// Search whether we already signed up this user.
-            ////////var listMatchEmailAddress = _dalUser.Where(x => x.EmailAddress.ToLower().Equals(um.Email.ToLower()), null).Data;
-            ////////bool bFirstTime = (listMatchEmailAddress.Count == 0);
-            ////////if (bFirstTime)
-            ////////{
-            ////////    // Add record to database if not previously added.
-            ////////    var id = await _dalUser.AddAsync(um, new UserToken());
-            ////////}
+            // Search whether we already signed up this user.
+            int count = _dalUsersu.Where(um.Email);
+            bool bFirstTime = (count == 0);
 
-            _mongologger.Info("SubmitMarketplace(): About to call Sssu_EmailMarketplace()");
-            bool bFirstTime = true;
-            await Sssu_EmailMarketplace(this, simInputValues, um, bFirstTime);
+            // If user does not exist in database, add it.
+            if (bFirstTime)
+            {
+                _dalUsersu.AddUser(um);
+            }
 
-            _logger.LogInformation($"SelfServiceSignUpNotifyController-Submit: Completed.");
+            _logger.LogInformation("SubmitMarketplace: About to call EmailSelfServiceMarketplace()");
+            await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
+
+            _logger.LogInformation($"SubmitMarketplace: Completed.");
 
             // Let's go ahead and create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
@@ -350,16 +339,16 @@ namespace CESMII.Common.SelfServiceSignUp
         protected const string MARKETPLACE_SIGNUP_SUBJECT = "CESMII | Marketplace | {{Type}}";
 
         /// <summary>
-        /// Sssu_EmailMarketplace - Self-Service Sign-Up notify via email that we have a new user.
+        /// EmailSelfServiceMarketplace - Self-Service Sign-Up notify via email that we have a new user.
         /// </summary>
         /// <param name="controller"></param>
         /// <param name="sim"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        private async Task Sssu_EmailMarketplace(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, Sssu_User_Model user, bool bFirstTime)
+        private async Task EmailSelfServiceMarketplace(SelfServiceSignUpNotifyController controller, SubmitInputModel sim, UserSignUpModel user, bool bFirstTime)
         {
             // Send email to notify recipient that we have received the cancel publish request
-            _mongologger.Info("Sssu_EmailMarketplace(): Entering");
+            _logger.LogInformation("EmailSelfServiceMarketplace: Entering");
             try
             {
                 var strSubject = MARKETPLACE_SIGNUP_SUBJECT.Replace("{{Type}}", "User Sign Up");
@@ -375,12 +364,12 @@ namespace CESMII.Common.SelfServiceSignUp
                 if (strBody.Contains("ERROR"))
                     throw new Exception("Unable to load email template. Check that files are in the CESMII.ProfileDesigner.Api project folder");
 
-                _mongologger.Info("Sssu_EmailMarketplace(): Sbout to call SendEmail");
+                _logger.LogInformation("EmailSelfServiceMarketplace: Sbout to call SendEmail");
                 await SendEmail(emailInfo, strBody);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"SelfServiceSignUp -- Notification email for new user {sim.displayName} [{sim.email}] not sent. Message={ex.Message}");
+                _logger.LogError(ex, $"EmailSelfServiceMarketplace: Notification email for new user {sim.displayName} [{sim.email}] not sent. Message={ex.Message}");
             }
         }
 
@@ -389,7 +378,7 @@ namespace CESMII.Common.SelfServiceSignUp
         /// </summary>
         private async Task SendEmail(EmailDataModel emailInfo, string body)
         {
-            _mongologger.Info("SendEmail(): Entering");
+            _logger.LogInformation("SendEmail: Entering");
 
             // Setup "To" list 
             // List of recipients for the notification email.
@@ -405,7 +394,7 @@ namespace CESMII.Common.SelfServiceSignUp
                 Body = body
             };
 
-            _mongologger.Info("SendEmail(): About to call SendEmailSendGrid");
+            _logger.LogInformation("SendEmail: About to call SendEmailSendGrid");
             await _mailService.SendEmailSendGrid(mm, leaTo,"SssuController");
         }
     }
