@@ -5,9 +5,7 @@ namespace CESMII.Common.SelfServiceSignUp
     using CESMII.Common.SelfServiceSignUp.Services;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
-    using NLog;
     using SendGrid.Helpers.Mail;
-    using System.Collections;
     using System.Net;
     using System.Net.Mail;
     using System.Threading.Tasks;
