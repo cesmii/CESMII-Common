@@ -1,4 +1,4 @@
-﻿// #define LOCALTEST
+﻿#define LOCALTEST
 namespace CESMII.Common.SelfServiceSignUp
 {
     using CESMII.Common.SelfServiceSignUp.Models;
@@ -14,10 +14,11 @@ namespace CESMII.Common.SelfServiceSignUp
 #pragma warning disable 8600, 8602     // Ignore worries about null values.
 
     /// <summary>
-    /// This class contains two member functions that serve as the "API Connectors" 
-    /// for an Azure "External Identities" Self-Services Sign-Up.
+    /// There are two different functions defined as part of the "API Connector" used by
+    /// the self-service sign up process for an Azure "External Identities" Self-Services Sign-Up.
     /// 
-    /// As of this writing, there are two types of API Connector functions for Self-Service Sign-Up:
+    /// As of this writing, we do not use the first but we use the second type (with two defined
+    /// in this file: one for Profile Designer and one for Marketplace).
     /// (1) Self-Sign Up Check Status -- not present.
     ///     This function gets called after a user (who wants to get added as an external identity
     ///     to an Azure AD domain) has signed into their home domain. In other words, they prove
@@ -25,7 +26,7 @@ namespace CESMII.Common.SelfServiceSignUp
     ///     return information from them logging in, but before they are asked to provide any
     ///     other user information that might be needed (aka "User Attributes")
     /// 
-    /// (2) Self-Sign Up Submit -- handled here by the Submit function
+    /// (2) Self-Sign Up Submit (SubmitProfileDesigner and SubmitMarketplace)
     ///     This function gets called after a user has entered whatever user attributes might
     ///     be needed to create an external user. We get a chance to review their input and
     ///     reject anything that is incorrect or reject, for example, any user with missing
@@ -57,25 +58,28 @@ namespace CESMII.Common.SelfServiceSignUp
             this._dalUsersu = usersu;
         }
 
-        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  // Azure AD prefers this - we don't use it to avoid weird custom attribute names.
+        // Azure AD prefers this as the declaration for the entry point.
+        // We don't use it to avoid weird custom attribute names.
+        // public async Task<IActionResult> Submit([FromBody] SubmitInputModel input)  
 
-
-        // When running in LOCALTEST mode:
-        // -- We remove the authentication ([SelfSignUpAuth]), since that's a headache to set up and deal with.
-        // -- Test parameters are passed in through a simple string that has some hand-coded JSON.
-        // When running in PRODUCTION mode:
-        // -- Enable authentication
-        // -- No input parameters, since we'll pluck that from the header using runtime magic.
 
 #if LOCALTEST
+        // To test -- in line 1, uncomment definition for LOCALTEST, rebuild, then paste the following JSON into Swagger:
+        // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
+
+        // When running in LOCALTEST mode:
+        // -- We remove authentication ([SelfSignUpAuth]), since that's a headache to set up and deal with.
+        // -- Test parameters are passed in through a simple string that has some hand-coded JSON.
+
         [HttpPost]
         [ActionName("submit")]
 
-        // To test -- in line 1, uncomment definition for LOCALTEST, then paste the following JSON into Swagger:
-        // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
         public async Task<IActionResult> SubmitProfileDesigner(string strInput)            // We for local testing
         {
 #else
+        // When running in PRODUCTION mode:
+        // -- Enable authentication
+        // -- No input parameters, since we'll pluck that from the header using runtime magic.
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submit")]
@@ -139,45 +143,55 @@ namespace CESMII.Common.SelfServiceSignUp
                 return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
+            // Do we still need this?!?
             bool bIsCesmiiMember = false;
             if (simInputValues.CESMIIMember != null)
             {
                 bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
             }
 
-            // AddAsync user to public.user database
-            // Note: This is the first half of collecting user information.
-            //       The other half occurs in the InitLocalUser function, which is found
-            //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
-            UserSignUpModel um = new UserSignUpModel()
+            try
             {
-                DisplayName = simInputValues.displayName,
-                Email = simInputValues.email,
-                Organization = simInputValues.Organization,
-                IsCesmiiMember = bIsCesmiiMember,
-            };
+                // AddAsync user to public.user database
+                // Note: This is the first half of collecting user information.
+                //       The other half occurs in the InitLocalUser function, which is found
+                //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
+                UserSignUpModel um = new UserSignUpModel()
+                {
+                    DisplayName = simInputValues.displayName,
+                    Email = simInputValues.email,
+                    Organization = simInputValues.Organization,
+                    IsCesmiiMember = bIsCesmiiMember,
+                };
 
-            if (!string.IsNullOrEmpty(simInputValues.givenName))
-                um.FirstName = simInputValues.givenName;
+                if (!string.IsNullOrEmpty(simInputValues.givenName))
+                    um.FirstName = simInputValues.givenName;
 
-            if (!string.IsNullOrEmpty(simInputValues.surName))
-                um.LastName = simInputValues.surName;
+                if (!string.IsNullOrEmpty(simInputValues.surName))
+                    um.LastName = simInputValues.surName;
 
-            // Search whether we already signed up this user.
-            int count = _dalUsersu.Where(um.Email);
-            bool bFirstTime = (count == 0);
+                // Search whether we already signed up this user.
+                int count = _dalUsersu.Where(um.Email);
+                bool bFirstTime = (count == 0);
 
-            // If user does not exist in database, add it.
-            if (bFirstTime)
+                // If user does not exist in database, add it.
+                if (bFirstTime)
+                {
+                    _dalUsersu.AddUser(um);
+                }
+
+                await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
+
+                _logger.LogInformation($"SubmitProfileDesigner: Completed.");
+            }
+            catch (Exception ex)
             {
-                _dalUsersu.AddUser(um);
+                string strError = ex.Message.ToString();
+                _logger.LogError($"API Connector (SubmitProfileDesigner) Creating User Record: {strError}");
+                return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
-            await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
-
-            _logger.LogInformation($"SubmitProfileDesigner: Completed.");
-
-            // Let's go ahead and create an account for these nice people.
+            // If we get here, allow Azure AD to create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
         }
 
@@ -217,14 +231,21 @@ namespace CESMII.Common.SelfServiceSignUp
         }
 
 #if LOCALTEST
-        [HttpPost]
-        [ActionName("submitmarketplace")]
-
         // To test -- in line 1, uncomment definition for LOCALTEST, then paste the following JSON into Swagger:
         // {  "email": "yaopaul@washington.edu",  "identities": [    {      "signInType": "string",      "issuer": "string",      "issuerAssignedId": "string"    }  ],  "displayName": "Paul Yao",  "givenName": "George",  "surName": "Anderson",  "phoneNumber": "(206) 355-9363",  "ui_locales": "string",  "organization": "University of Washington",  "cesmiiMember": "No",  "inputData": "string"}
+
+        // When running in LOCALTEST mode:
+        // -- We remove authentication ([SelfSignUpAuth]), since that's a headache to set up and deal with.
+        // -- Test parameters are passed in through a simple string that has some hand-coded JSON.
+
+        [HttpPost]
+        [ActionName("submitmarketplace")]
         public async Task<IActionResult> SubmitMarketplace(string strInput)            // We for local testing
         {
 #else
+        // When running in PRODUCTION mode:
+        // -- Enable authentication
+        // -- No input parameters, since we'll pluck that from the header using runtime magic.
         [HttpPost]
         [SelfSignUpAuth]
         [ActionName("submitmarketplace")]
@@ -296,41 +317,50 @@ namespace CESMII.Common.SelfServiceSignUp
                 bool.TryParse(simInputValues.CESMIIMember, out bIsCesmiiMember);
             }
 
-            // AddAsync user to public.user database
-            // Note: This is the first half of collecting user information.
-            //       The other half occurs in the InitLocalUser function, which is found
-            //       here: ProfileDesigner\api\CESMII.ProfileDesigner.Api\Controllers\AuthController.cs
-            _logger.LogInformation("SubmitMarketplace: About to create UserSignUpModel");
-            UserSignUpModel um = new UserSignUpModel()
+            try
             {
-                DisplayName = simInputValues.displayName,
-                Email = simInputValues.email,
-                Organization = simInputValues.Organization,
-                IsCesmiiMember = bIsCesmiiMember,
-            };
+                // AddAsync user to public.user database
+                // Note: This is the first half of collecting user information.
+                //       The other half occurs in the InitLocalUser function, which is found
+                //       here: Marketplace\api\CESMII.Marketplace.API\Controllers\AuthController.cs
+                _logger.LogInformation("SubmitMarketplace: About to create UserSignUpModel");
+                UserSignUpModel um = new UserSignUpModel()
+                {
+                    DisplayName = simInputValues.displayName,
+                    Email = simInputValues.email,
+                    Organization = simInputValues.Organization,
+                    IsCesmiiMember = bIsCesmiiMember,
+                };
 
-            if (!string.IsNullOrEmpty(simInputValues.givenName))
-                um.FirstName = simInputValues.givenName;
+                if (!string.IsNullOrEmpty(simInputValues.givenName))
+                    um.FirstName = simInputValues.givenName;
 
-            if (!string.IsNullOrEmpty(simInputValues.surName))
-                um.LastName = simInputValues.surName;
+                if (!string.IsNullOrEmpty(simInputValues.surName))
+                    um.LastName = simInputValues.surName;
 
-            // Search whether we already signed up this user.
-            int count = _dalUsersu.Where(um.Email);
-            bool bFirstTime = (count == 0);
+                // Search whether we already signed up this user.
+                int count = _dalUsersu.Where(um.Email);
+                bool bFirstTime = (count == 0);
 
-            // If user does not exist in database, add it.
-            if (bFirstTime)
+                // If user does not exist in database, add it.
+                if (bFirstTime)
+                {
+                    _dalUsersu.AddUser(um);
+                }
+
+                _logger.LogInformation("SubmitMarketplace: About to call EmailSelfServiceMarketplace()");
+                await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
+
+                _logger.LogInformation($"SubmitMarketplace: Completed.");
+            }
+            catch (Exception ex)
             {
-                _dalUsersu.AddUser(um);
+                string strError = ex.Message.ToString();
+                _logger.LogError($"SubmitMarketplace: API Connector Creating User: {strError}");
+                return BadRequest(new ResponseContent("Exception", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
             }
 
-            _logger.LogInformation("SubmitMarketplace: About to call EmailSelfServiceMarketplace()");
-            await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
-
-            _logger.LogInformation($"SubmitMarketplace: Completed.");
-
-            // Let's go ahead and create an account for these nice people.
+            // If we get here, allow Azure AD to create an account for these nice people.
             return Ok(new ResponseContent(string.Empty, string.Empty, HttpStatusCode.OK, action: "Allow"));
         }
 
