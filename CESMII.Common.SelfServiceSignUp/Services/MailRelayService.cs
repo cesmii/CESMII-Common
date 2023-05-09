@@ -55,10 +55,28 @@
                 }
                 else
                 {
-                    foreach (var address in _config.ToAddresses)
+                    // If message contains "To" recipient(s), use them.
+                    var myToList = message.To;
+                    if (myToList.Count > 0)
                     {
-                        leaTo.Add(new EmailAddress(address));
-                        _logger.LogInformation($"{strCaller}Adding Email To: {address}");
+                        foreach (var myItem in myToList)
+                        {
+                            if (myItem != null)
+                            {
+                                var myEmailAddress = new EmailAddress(myItem.Address, myItem.DisplayName);
+                                leaTo.Add(myEmailAddress);
+                                _logger.LogInformation($"{strCaller}Adding Email To: {myItem.Address} ({myItem.DisplayName})");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Otherwise use default configured set of recipients.
+                        foreach (var address in _config.ToAddresses)
+                        {
+                            leaTo.Add(new EmailAddress(address));
+                            _logger.LogInformation($"{strCaller}Adding Email To: {address}");
+                        }
                     }
                 }
 
@@ -141,6 +159,34 @@
             if (!string.IsNullOrEmpty(_config.BccAddress))
             {
                 msg.AddBcc(_config.BccAddress);
+            }
+
+            var myCCList = message.CC;
+            if (myCCList.Count > 0)
+            {
+                foreach (var myItem in myCCList)
+                {
+                    if (myItem != null)
+                    {
+                        // SendGrid doesn't like when a CC address is also in the To list.
+                        bool bFound = false;
+                        var myToList = message.To;
+                        foreach (var towhom in myToList)
+                        {
+                            if (towhom.Address.ToLower() == myItem.Address.ToLower())
+                            {
+                                bFound = true;
+                            }
+                        }
+
+                        if (!bFound)
+                        {
+                            var myEmailAddress = new EmailAddress(myItem.Address, myItem.DisplayName);
+                            msg.AddCc(myEmailAddress);
+                            _logger.LogInformation($"{strCaller}Adding Cc: {myItem.Address} ({myItem.DisplayName})");
+                        }
+                    }
+                }
             }
 
             var response = await client.SendEmailAsync(msg);
