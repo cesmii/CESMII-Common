@@ -526,10 +526,7 @@ namespace Opc.Ua.Cloud.Library.Client
                 };
                 return result;
             }
-            catch (HttpRequestException ex)
-#if !NETSTANDARD2_0
-            when (ex.StatusCode == HttpStatusCode.NotFound)
-#endif
+            catch (GraphQLHttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 Console.WriteLine("Error: " + ex.Message + " Cloud Library does not support GraphQL.");
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
@@ -822,10 +819,7 @@ query MyQuery ({variableParams}$after: String, $first: Int, $before: String, $la
                 };
                 return result;
             }
-            catch (HttpRequestException ex)
-#if !NETSTANDARD2_0
-            when (ex.StatusCode == HttpStatusCode.NotFound)
-#endif
+            catch (GraphQLHttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 Console.WriteLine("Error: " + ex.Message + " Cloud Library does not support GraphQL.");
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
@@ -888,10 +882,7 @@ mutation ApprovalMutation ($newStatus: ApprovalStatus!, $identifier: String, $ap
                 var result = await SendAndConvertAsync<UANameSpace>(request).ConfigureAwait(false);
                 return result;
             }
-            catch (HttpRequestException ex)
-#if !NETSTANDARD2_0
-            when (ex.StatusCode == HttpStatusCode.NotFound)
-#endif
+            catch (GraphQLHttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 Console.WriteLine("Error: " + ex.Message + " Cloud Library does not support GraphQL.");
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
@@ -986,11 +977,11 @@ query MyQuery ($identifier: String, $modelUri: String, $publicationDate: DateTim
                 var nodeSets = result?.nodes.Select(n => n.ToNodeSet()).ToList();
                 return nodeSets;
             }
-            catch (Exception ex)
+            catch (GraphQLHttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
             {
                 if (!_allowRestFallback)
                 {
-                    throw;
+                    throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
                 }
                 Console.WriteLine("Error: " + ex.Message + " Falling back to REST interface...");
                 var nodeSetAndDependencies = new List<Nodeset>();
