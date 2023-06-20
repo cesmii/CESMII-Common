@@ -18,16 +18,16 @@ namespace CESMII.Common.CloudLibClient
             _client = new UACloudLibClient(cloudLibOptions.Value);
         }
 
-        public async Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount = false)
+        public async Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount = false, object? order = null)
         {
             GraphQlResult<Nodeset> result;
             if (!pageBackwards)
             {
-                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), after: cursor, first: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false);
+                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), after: cursor, first: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, order: order);
             }
             else
             {
-                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), before: cursor, last: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false);
+                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), before: cursor, last: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, order: order);
             }
             return result;
         }
@@ -42,7 +42,38 @@ namespace CESMII.Common.CloudLibClient
         {
             GraphQlResult<Nodeset> result;
             result = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
-            return result?.Nodes?.FirstOrDefault()?.Metadata;
+
+            var uaNodeSet = result?.Nodes?.FirstOrDefault();
+            var uaNamespace = uaNodeSet?.Metadata;
+            if (uaNamespace != null && uaNodeSet != null)
+            {
+                uaNamespace.Nodeset = uaNodeSet;
+                uaNamespace.Nodeset.Metadata = null;// break the cycle before returning the uaNamespace
+            }
+            return uaNamespace;
+        }
+
+        /// <summary>
+        /// Get a list of nodesets by passing in a list of nodeset ids 
+        /// </summary>
+        /// <param name="identifiers"></param>
+        /// <returns></returns>
+        public async Task<GraphQlResult<Nodeset>?> GetManyAsync(List<string> identifiers)
+        {
+            //TODO: Can we change _client to offer an endpoint which supports passing a list of ids
+            // Right now, I am calling once for each id which is inefficient. 
+            // Other option is to get all and then filter result on list of ids which is also inefficient.
+            GraphQlResult<Nodeset> result = null;
+            bool firstIteration = true;
+            foreach (var identifier in identifiers)
+            {
+                GraphQlResult<Nodeset> item = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
+                if (firstIteration) result = item;
+                else result.Edges = result.Edges.Union(item.Edges).ToList();
+
+                firstIteration = false;
+            }
+            return result;
         }
 
 

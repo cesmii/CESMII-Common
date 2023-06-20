@@ -85,6 +85,10 @@ namespace Opc.Ua.Cloud.Library.Client
             do
             {
                 var results = await GetBasicNodesetInformationAsync(offset, limit, keywords).ConfigureAwait(false);
+                if (results == null)
+                {
+                    return null;
+                }
                 nodeSetResults.AddRange(results);
                 offset += limit;
             } while (nodeSetResults.Count == limit);
@@ -104,12 +108,12 @@ namespace Opc.Ua.Cloud.Library.Client
             HttpResponseMessage response = await client.GetAsync(address).ConfigureAwait(false);
 
             List<UANodesetResult> info = null;
+            response.EnsureSuccessStatusCode();
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 info = JsonConvert.DeserializeObject<List<UANodesetResult>>(responseJson);
             }
-
             return info;
         }
 
@@ -127,12 +131,12 @@ namespace Opc.Ua.Cloud.Library.Client
             var address = new Uri(client.BaseAddress, request);
             HttpResponseMessage response = await client.GetAsync(address).ConfigureAwait(false);
             UANameSpace resultType = null;
+            response.EnsureSuccessStatusCode();
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 resultType = JsonConvert.DeserializeObject<UANameSpace>(responseJson, new JsonSerializerSettings { DateTimeZoneHandling = DateTimeZoneHandling.Utc });
             }
-
             return resultType;
         }
 
@@ -141,6 +145,7 @@ namespace Opc.Ua.Cloud.Library.Client
             Uri address = new Uri(client.BaseAddress, "infomodel/namespaces/");
             HttpResponseMessage response = await client.GetAsync(address).ConfigureAwait(false);
             (string namespaceUri, string identifier)[] resultType = null;
+            response.EnsureSuccessStatusCode();
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);

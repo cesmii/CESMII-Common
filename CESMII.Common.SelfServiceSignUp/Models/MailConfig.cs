@@ -1,7 +1,7 @@
 ﻿namespace CESMII.Common.SelfServiceSignUp.Models
 {
     using System.Collections.Generic;
-    internal class MailConfig
+    public class MailConfig
     {
         public bool Enabled { get; set; }
 
@@ -13,7 +13,9 @@
 
         public string? BaseUrl { get; set; }
 
-        public string? MailFromAddress { get; set; }
+        public string? FromAddress { get; set; }
+
+        public string? BccAddress { get; set; }
 
         public string? MailFromAppName { get; set; }
 
@@ -21,7 +23,7 @@
 
         public int Port { get; set; }
 
-        public bool EnableSsl { get; set; }
+        public bool EnableSSL { get; set; }
 
         public string? Username { get; set; }
 

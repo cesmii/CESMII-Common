@@ -78,6 +78,19 @@
             string strConfigUser = (string)_config.GetValue(typeof(string), "ApiUsername");
             string strConfigPwd = (string)_config.GetValue(typeof(string), "ApiPassword");
 
+            // Debug helpers
+            //if (username == null) username = "[null]";
+            //if (password == null) password = "[null]";
+
+            //_logger.LogError($"OnAuthorization: username = {username}");
+            //_logger.LogError($"OnAuthorization: password = {password}");
+
+            //if (strConfigUser == null) strConfigUser="[null]";
+            //if(strConfigPwd == null) strConfigPwd="[null]";
+
+            //_logger.LogError($"OnAuthorization: strConfigUser = {strConfigUser}");
+            //_logger.LogError($"OnAuthorization: strConfigPwd = {strConfigPwd}");
+
             if (username.Equals(strConfigUser) && password.Equals(strConfigPwd))
             {
                 return true;

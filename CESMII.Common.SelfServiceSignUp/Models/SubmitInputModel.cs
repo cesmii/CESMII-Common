@@ -85,7 +85,7 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                         // Console.WriteLine($"{iItem}) Token: {reader.TokenType}, Value: {reader.Value}");
                         if (reader.TokenType ==JsonToken.PropertyName && reader.Value != null)
                         {
-                            string strName = reader.Value.ToString();
+                            string strName = reader.Value.ToString().ToLower();
                             if (reader.Read())
                             {
                                 if(reader.TokenType == JsonToken.String && reader.Value != null)
@@ -94,25 +94,29 @@ namespace CESMII.Common.SelfServiceSignUp.Models
                                     switch (strName)
                                     { 
                                         case "email": this.email = strValue; break;
-                                        case "displayName": this.displayName = strValue; break;
-                                        case "givenName": this.givenName = strValue; break;
-                                        case "surName": this.surName = strValue; break;
-                                        case "phoneNumber": this.phoneNumber = strValue; break;
+                                        case "displayname": this.displayName = strValue; break;
+                                        case "givenname": this.givenName = strValue; break;
+                                        case "surname": this.surName = strValue; break;
+                                        case "phonenumber": this.phoneNumber = strValue; break;
                                         case "ui_locales": this.ui_locales = strValue; break;
                                         default:
-                                            if (strName.EndsWith("_Organization"))
+                                            if (strName.EndsWith("organization"))
                                             {
                                                 Organization = strValue;
+                                            }
+                                            else if (strName.EndsWith("cesmiimember"))
+                                            {
+                                                CESMIIMember = (strValue.ToLower()=="true") ? "true" : "false";
                                             }
                                             break;
                                     }
                                 }
                                 else if (reader.TokenType == JsonToken.Boolean&& reader.Value != null)
                                 {
-                                    if (strName.EndsWith("_CESMIIMember"))
+                                    if (strName.EndsWith("cesmiimember"))
                                     {
                                         bool bValue = (bool)reader.Value;
-                                        CESMIIMember = (bValue) ? "Yes" : "No";
+                                        CESMIIMember = (bValue) ? "true" : "false";
                                     }
                                 }
                             }
