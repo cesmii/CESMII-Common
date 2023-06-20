@@ -5,7 +5,7 @@ namespace CESMII.Common.CloudLibClient
 {
     public interface ICloudLibWrapper
     {
-        Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount);
+        Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount = false, object? order = null);
         Task<GraphQlResult<Nodeset>> GetManyAsync(List<string> identifiers);
         Task<UANameSpace?> DownloadAsync(string id);
         Task<UANameSpace?> GetAsync(string identifier);

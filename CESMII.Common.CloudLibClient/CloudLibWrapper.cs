@@ -18,16 +18,16 @@ namespace CESMII.Common.CloudLibClient
             _client = new UACloudLibClient(cloudLibOptions.Value);
         }
 
-        public async Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount = false)
+        public async Task<GraphQlResult<Nodeset>> SearchAsync(int? limit, string cursor, bool pageBackwards, List<string> keywords, List<string> exclude, bool noTotalCount = false, object? order = null)
         {
             GraphQlResult<Nodeset> result;
             if (!pageBackwards)
             {
-                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), after: cursor, first: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false);
+                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), after: cursor, first: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, order: order);
             }
             else
             {
-                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), before: cursor, last: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false);
+                result = await _client.GetNodeSetsAsync(keywords: keywords?.ToArray(), before: cursor, last: limit, noTotalCount: noTotalCount, noRequiredModels: true, noMetadata: false, order: order);
             }
             return result;
         }
