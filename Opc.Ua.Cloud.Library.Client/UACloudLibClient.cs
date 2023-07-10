@@ -671,6 +671,7 @@ namespace Opc.Ua.Cloud.Library.Client
             validationStatus
             approvalStatus
             approvalInformation
+            userId
           }
             ";
 
@@ -717,8 +718,12 @@ namespace Opc.Ua.Cloud.Library.Client
                 if (publicationDate != null)
                 {
                     whereClause += ", publicationDate: {eq: $publicationDate}";
+                    variableParams += "$namespaceUri: String, $publicationDate: DateTime, ";
                 }
-                variableParams += "$namespaceUri: String, $publicationDate: DateTime, ";
+                else
+                {
+                    variableParams += "$namespaceUri: String, ";
+                }
             }
             if (additionalProperty != null)
             {

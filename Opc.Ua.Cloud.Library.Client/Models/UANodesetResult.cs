@@ -76,6 +76,11 @@ namespace Opc.Ua.Cloud.Library.Client
         /// </summary>
         public string ValidationStatus { get; set; }
         /// <summary>
+        /// The submitting user
+        /// </summary>
+        [JsonProperty("userId")]
+        public string UserId { get; set; }
+        /// <summary>
         /// Indicates the nodesets that this nodesets depends on
         /// </summary>
         public List<RequiredModelInfo> RequiredNodesets { get; set; }
