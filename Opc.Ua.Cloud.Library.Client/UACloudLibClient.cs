@@ -468,11 +468,16 @@ namespace Opc.Ua.Cloud.Library.Client
         /// <param name="keywords"></param>
         /// <param name="after">Pagination: cursor of the last node in the previous page, use for forward paging</param>
         /// <param name="first">Pagination: maximum number of nodes to return, use with after for forward paging.</param>
+        /// <param name="last">Pagination: minimum number of nodes to return, use with before for backward paging.</param>
         /// <param name="before">Pagination: cursor of the first node in the next page. Use for backward paging</param>
         /// <param name="noMetadata">Don't request Nodeset.Metadata (performance)</param>
         /// <param name="noTotalCount">Don't request TotalCount (performance)</param>
         /// <param name="noRequiredModels">Don't request Nodeset.RequiredModels (performance)</param>
-        /// <param name="last">Pagination: minimum number of nodes to return, use with before for backward paging.</param>
+        /// <param name="order">GraphQl string or object indicating the sort order for the results.
+        /// Examples:
+        /// order: new { metadata = new { title = OrderEnum.ASC }, modelUri = OrderEnum.ASC, publicationDate = OrderEnum.DESC }
+        /// "{metadata: {title: ASC}, modelUri: ASC, publicationDate: DESC}"
+        /// </param>
         /// <returns>The metadata for the requested nodesets, as well as the metadata for all required notesets.</returns>
         public async Task<GraphQlResult<Nodeset>> GetNodeSetsAsync(string identifier = null, string modelUri = null, DateTime? publicationDate = null, string[] keywords = null,
             string after = null, int? first = null, int? last = null, string before = null, bool noMetadata = false, bool noTotalCount = false, bool noRequiredModels = false ,object order = null)
@@ -534,10 +539,19 @@ namespace Opc.Ua.Cloud.Library.Client
                 throw new GraphQlNotSupportedException("Cloud Library does not support GraphQL.", ex);
             }
         }
-
+        /// <summary>
+        /// Used in calls to GetNodeSetsAsync in the order parameter. Example:
+        /// order: new { metadata = new { title = OrderEnum.ASC }, modelUri = OrderEnum.ASC, publicationDate = OrderEnum.DESC }
+        /// </summary>
         public enum OrderEnum
         {
+            /// <summary>
+            /// Ascending sort
+            /// </summary>
             ASC,
+            /// <summary>
+            /// Descending sort
+            /// </summary>
             DESC,
         };
 
