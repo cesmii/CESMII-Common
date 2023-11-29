@@ -63,15 +63,18 @@ namespace CESMII.Common.CloudLibClient
             //TODO: Can we change _client to offer an endpoint which supports passing a list of ids
             // Right now, I am calling once for each id which is inefficient. 
             // Other option is to get all and then filter result on list of ids which is also inefficient.
-            GraphQlResult<Nodeset> result = null;
-            bool firstIteration = true;
+            GraphQlResult<Nodeset>? result = null;
             foreach (var identifier in identifiers)
             {
                 GraphQlResult<Nodeset> item = await _client.GetNodeSetsAsync(identifier: identifier, noRequiredModels: true, noTotalCount: true);
-                if (firstIteration) result = item;
-                else result.Edges = result.Edges.Union(item.Edges).ToList();
-
-                firstIteration = false;
+                if (result == null)
+                {
+                    result = item;
+                }
+                else
+                {
+                    result.Edges = result.Edges.Union(item.Edges).ToList();
+                }
             }
             return result;
         }
