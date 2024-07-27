@@ -174,15 +174,17 @@ namespace CESMII.Common.SelfServiceSignUp
                 int count = _dalUsersu.Where(um.Email);
                 bool bFirstTime = (count == 0);
 
-                // If user does not exist in database, add it.
+                // If user does not exist in database, add them
                 if (bFirstTime)
                 {
                     _dalUsersu.AddUser(um);
+
+                    // Then send them email to let them know.
+                    await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
+
+                    _logger.LogInformation($"SubmitProfileDesigner: Completed.");
                 }
 
-                await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
-
-                _logger.LogInformation($"SubmitProfileDesigner: Completed.");
             }
             catch (Exception ex)
             {
@@ -342,16 +344,17 @@ namespace CESMII.Common.SelfServiceSignUp
                 int count = _dalUsersu.Where(um.Email);
                 bool bFirstTime = (count == 0);
 
-                // If user does not exist in database, add it.
+                // If user does not exist in database, add them.
                 if (bFirstTime)
                 {
                     _dalUsersu.AddUser(um);
+
+                    // Then send them email to let them know.
+                    await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
+
+                    _logger.LogInformation($"SubmitMarketplace: Completed.");
                 }
 
-                _logger.LogInformation("SubmitMarketplace: About to call EmailSelfServiceMarketplace()");
-                await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
-
-                _logger.LogInformation($"SubmitMarketplace: Completed.");
             }
             catch (Exception ex)
             {
