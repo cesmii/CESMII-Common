@@ -41,6 +41,11 @@ namespace CESMII.Common.SelfServiceSignUp
     [Route("api/SelfServiceSignUp/[action]")]
     public class SelfServiceSignUpNotifyController : Controller
     {
+        // During sign up, users can click on [Continue] multiple times, which causes multiple emails
+        // to get sent. The database round-trip must be too slow. So we keep this in-memory
+        // dictionary so we have the latest list of who has signed up in the past few moments.
+        private static Dictionary<string, string> dictUserAlreadySignedUp = new Dictionary<string, string>();
+
         private readonly MailRelayService _mailService;
         private readonly IUserSignUpData _dalUsersu;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
@@ -107,6 +112,20 @@ namespace CESMII.Common.SelfServiceSignUp
             try
             {
                 simInputValues = new SubmitInputModel(strInput);
+
+                string strEmail = simInputValues.email.ToLower().Trim();
+                if (dictUserAlreadySignedUp.ContainsKey(strEmail))
+                {
+                    string strError = "SubmitProfileDesigner: User already signed up.";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("UserAlreadySignedUp", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+                else
+                {
+                    dictUserAlreadySignedUp.Add(strEmail, strEmail);
+                }
+
+
 
                 if (simInputValues == null)
                 {
