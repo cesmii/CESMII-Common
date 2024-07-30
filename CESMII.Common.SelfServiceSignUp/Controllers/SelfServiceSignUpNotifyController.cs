@@ -201,6 +201,12 @@ namespace CESMII.Common.SelfServiceSignUp
 
                     _logger.LogInformation($"SubmitProfileDesigner: Completed.");
                 }
+                else
+                {
+                    string strError = "SubmitProfileDesigner: User already signed up.";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("UserAlreadySignedUp", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
 
             }
             catch (Exception ex)
