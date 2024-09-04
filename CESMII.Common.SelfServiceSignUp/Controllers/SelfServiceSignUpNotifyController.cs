@@ -41,6 +41,11 @@ namespace CESMII.Common.SelfServiceSignUp
     [Route("api/SelfServiceSignUp/[action]")]
     public class SelfServiceSignUpNotifyController : Controller
     {
+        //// During sign up, users can click on [Continue] multiple times, which causes multiple emails
+        //// to get sent. The database round-trip must be too slow. So we keep this in-memory
+        //// dictionary so we have the latest list of who has signed up in the past few moments.
+        private static Dictionary<string, string> dictUserAlreadySignedUp = new Dictionary<string, string>();
+
         private readonly MailRelayService _mailService;
         private readonly IUserSignUpData _dalUsersu;
         protected readonly ILogger<SelfServiceSignUpNotifyController> _logger;
@@ -108,6 +113,18 @@ namespace CESMII.Common.SelfServiceSignUp
             {
                 simInputValues = new SubmitInputModel(strInput);
 
+                string strEmail = simInputValues.email.ToLower().Trim();
+                if (dictUserAlreadySignedUp.ContainsKey(strEmail))
+                {
+                    string strError = "SubmitProfileDesigner: User already signed up.";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("UserAlreadySignedUp", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
+                }
+                else
+                {
+                    dictUserAlreadySignedUp.Add(strEmail, strEmail);
+                }
+
                 if (simInputValues == null)
                 {
                     string strError = "SubmitProfileDesigner: Can not deserialize simInputValues claims.";
@@ -174,15 +191,23 @@ namespace CESMII.Common.SelfServiceSignUp
                 int count = _dalUsersu.Where(um.Email);
                 bool bFirstTime = (count == 0);
 
-                // If user does not exist in database, add it.
+                // If user does not exist in database, add them
                 if (bFirstTime)
                 {
                     _dalUsersu.AddUser(um);
+
+                    // Then send them email to let them know.
+                    await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
+
+                    _logger.LogInformation($"SubmitProfileDesigner: Completed.");
+                }
+                else
+                {
+                    string strError = "SubmitProfileDesigner: User already signed up.";
+                    _logger.LogError(strError);
+                    return BadRequest(new ResponseContent("UserAlreadySignedUp", strError, HttpStatusCode.BadRequest, action: "ValidationError"));
                 }
 
-                await EmailSelfServiceSignUpNotification(this, simInputValues, um, bFirstTime);
-
-                _logger.LogInformation($"SubmitProfileDesigner: Completed.");
             }
             catch (Exception ex)
             {
@@ -342,16 +367,17 @@ namespace CESMII.Common.SelfServiceSignUp
                 int count = _dalUsersu.Where(um.Email);
                 bool bFirstTime = (count == 0);
 
-                // If user does not exist in database, add it.
+                // If user does not exist in database, add them.
                 if (bFirstTime)
                 {
                     _dalUsersu.AddUser(um);
+
+                    // Then send them email to let them know.
+                    await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
+
+                    _logger.LogInformation($"SubmitMarketplace: Completed.");
                 }
 
-                _logger.LogInformation("SubmitMarketplace: About to call EmailSelfServiceMarketplace()");
-                await EmailSelfServiceMarketplace(this, simInputValues, um, bFirstTime);
-
-                _logger.LogInformation($"SubmitMarketplace: Completed.");
             }
             catch (Exception ex)
             {
