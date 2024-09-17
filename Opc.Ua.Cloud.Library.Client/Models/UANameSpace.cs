@@ -158,6 +158,12 @@ namespace Opc.Ua.Cloud.Library.Client
         [JsonProperty("approvalInformation")]
         public string ApprovalInformation { get; set; }
 
+        /// <summary>
+        /// The submitting user
+        /// </summary>
+        [JsonProperty("userId")]
+        public string UserId{ get; set; }
+
         /// <summary>Gets or sets the additional properties.</summary>
         /// <value>The additional properties.</value>
         [JsonProperty("additionalProperties")]

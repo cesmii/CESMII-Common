@@ -107,6 +107,7 @@ namespace Opc.Ua.Cloud.Library.Client
                 Contributor = new Organisation {
                     Name = info.Contributor,
                 },
+                UserId = info.UserId,
                 ValidationStatus = info.ValidationStatus,
             };
             return nameSpace;
