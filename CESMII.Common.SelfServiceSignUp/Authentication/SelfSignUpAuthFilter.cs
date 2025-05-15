@@ -28,7 +28,7 @@
             _logger.LogInformation($"OnAuthorization: Validating API Connector");
             try
             {
-                string authHeader = context.HttpContext.Request.Headers["Authorization"];
+                string? authHeader = context.HttpContext.Request.Headers["Authorization"];
                 if (authHeader == null)
                 {
                     _logger.LogError("OnAuthorization: authHeader == null.");
@@ -75,8 +75,8 @@
 
         private bool IsValidUser(string username, string password)
         {
-            string strConfigUser = (string)_config.GetValue(typeof(string), "ApiUsername");
-            string strConfigPwd = (string)_config.GetValue(typeof(string), "ApiPassword");
+            string? strConfigUser = (string?)_config.GetValue(typeof(string), "ApiUsername");
+            string? strConfigPwd = (string?)_config.GetValue(typeof(string), "ApiPassword");
 
             // Debug helpers
             //if (username == null) username = "[null]";

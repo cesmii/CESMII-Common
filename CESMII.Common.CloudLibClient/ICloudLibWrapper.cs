@@ -31,9 +31,9 @@ namespace CESMII.Common.CloudLibClient
         {
         }
 
-        protected UploadException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+        //protected UploadException(SerializationInfo info, StreamingContext context) : base(info, context)
+        //{
+        //}
     }
 
 }

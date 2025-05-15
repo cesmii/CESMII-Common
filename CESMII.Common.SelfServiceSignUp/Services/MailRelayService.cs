@@ -358,7 +358,8 @@
 
             if (_config.EnableSSL)
             {
-                ServicePointManager.ServerCertificateValidationCallback = (s, certificate, chain, sslPolicyErrors) => true;
+                // ServicePointManager.ServerCertificateValidationCallback = (s, certificate, chain, sslPolicyErrors) => true;
+                _logger.LogDebug(".NET 9 does not support server certificate validation. If you need this done, please configure this on your email server.");
             }
 
             _logger.LogDebug($"Email configuration | Server: {_config.Address} Port: {_config.Port} SSL: {_config.EnableSSL}");
