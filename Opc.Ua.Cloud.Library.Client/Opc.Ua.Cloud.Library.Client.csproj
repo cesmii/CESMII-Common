@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>Opc.Ua.Cloud.Library.Client</AssemblyName>
     <PackageId>OPCFoundation.NetStandard.Opc.Ua.Cloud.Library.Client</PackageId>
-    <TargetFrameworks>net9.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>Opc.Ua.Cloud.Library.Client</RootNamespace>
     <Description>OPC UA Cloud Library Client Class Library</Description>
     <IsPackable>true</IsPackable>
